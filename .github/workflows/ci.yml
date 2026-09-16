@@ -1,0 +1,211 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+  merge_group:
+    types: [checks_requested]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  CI: 'true'
+  PYTHONUTF8: '1'
+
+jobs:
+  quality:
+    name: Quality & unit (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-24.04
+            shell: bash
+          - os: windows-2025
+            shell: powershell
+    defaults:
+      run:
+        shell: ${{ matrix.shell }}
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up toolchain
+        uses: ./.github/actions/setup-toolchain
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies
+        run: pnpm python:sync
+
+      - name: Validate workflow with actionlint
+        if: ${{ runner.os == 'Linux' }}
+        shell: bash
+        run: |
+          curl --fail --silent --show-error --location \
+            https://github.com/rhysd/actionlint/releases/download/v1.7.12/actionlint_1.7.12_linux_amd64.tar.gz \
+            --output "$RUNNER_TEMP/arxen-actionlint.tar.gz"
+          printf '%s  %s\n' \
+            8aca8db96f1b94770f1b0d72b6dddcb1ebb8123cb3712530b08cc387b349a3d8 \
+            "$RUNNER_TEMP/arxen-actionlint.tar.gz" | sha256sum --check --strict
+          tar -xzf "$RUNNER_TEMP/arxen-actionlint.tar.gz" -C "$RUNNER_TEMP" actionlint
+          pnpm exec "$RUNNER_TEMP/actionlint" .github/workflows/ci.yml
+
+      - name: Validate Compose configuration
+        if: ${{ runner.os == 'Linux' }}
+        run: pnpm exec docker compose -f infra/compose.yaml config --quiet
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Check formatting
+        run: pnpm format:check
+
+      - name: Check types
+        run: pnpm typecheck
+
+      - name: Test web with coverage
+        run: pnpm test:web
+
+      - name: Test API with coverage
+        run: pnpm test:api
+
+      - name: Build web
+        run: pnpm build
+
+      - name: Require test evidence and build output
+        shell: bash
+        run: |
+          test -s test-results/web/junit.xml
+          test -s test-results/api/junit.xml
+          test -s coverage/web/lcov.info
+          test -s coverage/api/coverage.xml
+          test -s apps/web/dist/index.html
+
+      - name: Upload unit coverage and results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: unit-${{ matrix.os }}
+          path: |
+            coverage/
+            test-results/web/
+            test-results/api/
+          retention-days: 5
+          if-no-files-found: warn
+
+  integration:
+    name: Integration (PostgreSQL + pgvector)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: pgvector/pgvector:0.8.6-pg17-bookworm
+        env:
+          POSTGRES_DB: arxen_test
+          POSTGRES_USER: arxen_test
+          POSTGRES_PASSWORD: arxen_test_password
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U arxen_test -d arxen_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
+          --health-start-period 10s
+    env:
+      TEST_DATABASE_URL: postgresql://arxen_test:arxen_test_password@127.0.0.1:5432/arxen_test
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up toolchain
+        uses: ./.github/actions/setup-toolchain
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies
+        run: pnpm python:sync
+
+      - name: Test with real PostgreSQL and pgvector
+        run: pnpm test:integration
+
+      - name: Upload integration results
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: integration-results
+          path: test-results/integration/
+          retention-days: 5
+          if-no-files-found: warn
+
+  e2e:
+    name: E2E (Chromium)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+        with:
+          persist-credentials: false
+
+      - name: Set up toolchain
+        uses: ./.github/actions/setup-toolchain
+
+      - name: Install JavaScript dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Python dependencies
+        run: pnpm python:sync
+
+      - name: Install Chromium and system dependencies
+        run: pnpm test:e2e:install:ci
+
+      - name: Test browser, web and API
+        run: pnpm test:e2e
+
+      - name: Upload Playwright report and failure evidence
+        if: ${{ always() }}
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: playwright-chromium
+          path: |
+            playwright-report/
+            test-results/e2e/
+          retention-days: 5
+          if-no-files-found: warn
+
+  ci-gate:
+    name: CI Gate
+    if: ${{ always() }}
+    needs: [quality, integration, e2e]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Require every job to succeed
+        shell: bash
+        env:
+          QUALITY_RESULT: ${{ needs.quality.result }}
+          INTEGRATION_RESULT: ${{ needs.integration.result }}
+          E2E_RESULT: ${{ needs.e2e.result }}
+        run: |
+          printf 'quality=%s\nintegration=%s\ne2e=%s\n' "$QUALITY_RESULT" "$INTEGRATION_RESULT" "$E2E_RESULT"
+          test "$QUALITY_RESULT" = success
+          test "$INTEGRATION_RESULT" = success
+          test "$E2E_RESULT" = success

@@ -1,0 +1,12 @@
+node_modules/
+.venv/
+.git/
+.tools/
+.artifacts/
+coverage/
+test-results/
+playwright-report/
+**/dist/
+pnpm-lock.yaml
+uv.lock
+*.py

@@ -1,0 +1,14 @@
+# Only GitHub Actions is enabled until support for the pinned package managers
+# is confirmed. See docs/testing.md before adding npm (pnpm) or uv updates.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+      time: '12:00'
+      timezone: America/Fortaleza
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore(deps)'
