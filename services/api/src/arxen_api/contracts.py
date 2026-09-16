@@ -43,3 +43,25 @@ class Source(StoredRecord):
     start_offset: int
     end_offset: int
     excerpt: str
+
+
+type TaskState = Literal[
+    "draft",
+    "queued",
+    "running",
+    "waiting_user",
+    "waiting_budget",
+    "pause_requested",
+    "paused",
+    "recovering",
+    "completed",
+    "failed",
+    "cancelled",
+]
+
+
+@dataclass(frozen=True, kw_only=True)
+class Task(StoredRecord):
+    case_id: UUID
+    objective: str
+    state: TaskState

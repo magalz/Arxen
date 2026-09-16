@@ -9,7 +9,7 @@ from uuid import UUID
 import psycopg
 from psycopg.rows import class_row
 
-from arxen_api.contracts import Case, Message, MessageRole, Source
+from arxen_api.contracts import Case, Message, MessageRole, Source, Task
 
 
 class CoreRepository:
@@ -61,7 +61,30 @@ class CoreRepository:
         end_offset: int,
         excerpt: str,
     ) -> Source:
-        raise NotImplementedError("Source persistence is not implemented")
+        with self.connection.cursor(row_factory=class_row(Source)) as cursor:
+            cursor.execute(
+                "INSERT INTO sources "
+                "(case_id, message_id, start_offset, end_offset, excerpt) "
+                "VALUES (%s, %s, %s, %s, %s) "
+                "RETURNING id, case_id, kind, message_id, start_offset, end_offset, "
+                "excerpt, created_at",
+                (case_id, message_id, start_offset, end_offset, excerpt),
+            )
+            source = cursor.fetchone()
+            assert source is not None
+            return source
 
     def get_source(self, case_id: UUID, source_id: UUID) -> Source | None:
-        raise NotImplementedError("Source reading is not implemented")
+        with self.connection.cursor(row_factory=class_row(Source)) as cursor:
+            cursor.execute(
+                "SELECT id, case_id, kind, message_id, start_offset, end_offset, "
+                "excerpt, created_at FROM sources WHERE case_id = %s AND id = %s",
+                (case_id, source_id),
+            )
+            return cursor.fetchone()
+
+    def create_task(self, case_id: UUID, objective: str) -> Task:
+        raise NotImplementedError("Task persistence is not implemented")
+
+    def get_task(self, case_id: UUID, task_id: UUID) -> Task | None:
+        raise NotImplementedError("Task reading is not implemented")
