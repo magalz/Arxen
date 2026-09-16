@@ -6,16 +6,19 @@ ferramentas. A imagem `pgvector/pgvector:0.8.6-pg17-bookworm` consta nas
 A mesma tag é usada pelo serviço do CI. A tag fixa a linha PostgreSQL 17 e a
 versão pgvector 0.8.6; não fixa um digest imutável da imagem.
 
-Com Docker e Compose disponíveis, execute pela raiz do projeto:
+Com Podman e um provedor Compose disponíveis, execute pela raiz do projeto:
 
 ```text
-pnpm exec docker compose -f infra/compose.yaml config --quiet
+pnpm infra:config
 pnpm infra:up
-pnpm exec docker compose -f infra/compose.yaml ps
+podman compose -f infra/compose.yaml ps
 ```
 
 O serviço `postgres` publica somente `127.0.0.1:5433`. O healthcheck usa
 `pg_isready`, e `infra:up` aguarda a condição saudável com `--wait`.
+`podman compose` delega a um provedor Compose externo. Confirme o provedor com
+`podman compose version`. No Windows validado em 16/09/2026, o runtime foi Podman
+e o provedor Compose foi Docker Compose v5.5.1; Docker Engine não foi necessário.
 
 | Parâmetro local    | Valor sintético                                                         |
 | ------------------ | ----------------------------------------------------------------------- |

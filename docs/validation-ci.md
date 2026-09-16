@@ -11,9 +11,26 @@ terminou com código 0 e dois testes aprovados no Chromium, incluindo a API por
 HTTP. Os ciclos Red/Green estão em [validation-web.md](validation-web.md) e
 [validation-python.md](validation-python.md).
 
-Docker não está instalado neste ambiente local. Por isso, não foi executado
-`pnpm infra:up` nem demonstrado o funcionamento do Compose no Windows.
-A integração foi executada no runner Linux, conforme os resultados abaixo.
+Na validação inicial desta PR, Docker não estava disponível localmente e a
+integração foi executada no runner Linux, conforme os resultados abaixo. Em uma
+validação posterior no mesmo dia, o ambiente local passou a usar Podman; os
+resultados desse follow-up pertencem à PR específica que altera os comandos locais.
+
+### Follow-up local com Podman
+
+Em 16/09/2026, o Windows local foi revalidado com Podman 6.0.2 e a máquina
+`gpt-jus-e00` em execução. `podman compose` encontrou Docker Compose v5.5.1 como
+provedor externo e confirmou suporte a `up --wait`; o runtime permaneceu Podman.
+
+Após alterar os scripts locais para `podman compose`, `pnpm infra:config` terminou
+com código 0 e `pnpm infra:up` criou o stack `arxen-dev`. O PostgreSQL/pgvector
+ficou saudável em `127.0.0.1:5433`. Com `TEST_DATABASE_URL` apontando para esse
+banco, `pnpm test:integration` coletou seis testes e terminou com `6 passed`.
+
+O primeiro `pnpm check` após a edição parou somente no Prettier de
+`docs/testing.md`. O arquivo foi formatado e a repetição completa de `pnpm check`
+terminou com código 0, incluindo lint, formato, tipos, um teste web, dois testes da
+API, cobertura e build. `pnpm test:e2e` também terminou com código 0 e `2 passed`.
 
 ## Execução da PR no GitHub
 
@@ -67,10 +84,13 @@ atualizada e `CI Gate` do GitHub Actions (`integration_id: 15368`, observado
 nos checks reais). Também bloqueia force push e exclusão, sem atores de bypass.
 O fluxo solo começa com zero aprovações obrigatórias de outros revisores.
 
-**O ruleset ainda não foi ativado.** A tentativa pela ferramenta de terminal
-foi bloqueada antes de uma resposta do GitHub; a listagem posterior de rulesets
-retornou `[]`. O [guia de proteção](../.github/rulesets/README.md) contém a
-configuração e os comandos de aplicação e conferência.
+Na revisão inicial, o ruleset ainda não estava ativo. Em 16/09/2026, após nova
+consulta confirmar `[]`, a configuração versionada foi aplicada com sucesso como
+ruleset `23565202`, com `enforcement: active`. A leitura efetiva das regras da
+`main` confirmou os quatro tipos esperados, `CI Gate` vinculado ao GitHub Actions,
+sem bypass; a branch passou a retornar `protected: true`. O
+[guia de proteção](../.github/rulesets/README.md) registra o estado atual e os
+comandos de conferência.
 
 Esta página preserva a evidência da execução inicial identificada acima.
 Alterações posteriores devem ser avaliadas pelos checks do último commit da PR.
