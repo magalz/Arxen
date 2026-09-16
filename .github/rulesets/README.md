@@ -15,20 +15,17 @@ vincula esse contexto ao GitHub Actions com `integration_id: 15368`, confirmado
 nos check runs reais do commit `250d0760fbab0dbae199f0b5de6cfde1bfe41de7` em
 16/09/2026. Assim, a regra preparada exige tanto o nome quanto a origem do check.
 
-**Estado confirmado em 16/09/2026:** configuração pronta, proteção ainda não
-ativada. A tentativa de criação pela ferramenta de terminal foi bloqueada antes
-de retornar uma resposta do GitHub, com a mensagem de que não foi possível
-determinar o status de segurança da solicitação. A consulta posterior a
-`GET /repos/magalz/Arxen/rulesets` retornou `[]`. Isso não demonstra falta de
-permissão da conta ou limitação do plano; a ativação administrativa segue pendente.
+**Estado confirmado em 16/09/2026:** o ruleset foi aplicado ao repositório com ID
+`23565202` e `enforcement: active`. A leitura posterior de
+`GET /repos/magalz/Arxen/rules/branches/main` confirmou PR obrigatório, conversas
+resolvidas, `CI Gate` estrito vinculado ao GitHub Actions, bloqueio de exclusão e
+force push e ausência de bypass. A branch `main` passou a retornar
+`protected: true`.
 
-Antes da ativação, publique o workflow e confira uma execução completa na branch
-de preparação. Em um repositório vazio, a criação inicial de `main` precisa estar
-resolvida antes de exigir o check nela. O arquivo usa `enforcement: active`, mas
-essa propriedade só tem efeito após importação/aplicação aceita pelo servidor.
 Os resultados e a correção identificada na execução inicial estão na
-[validação do CI](../../docs/validation-ci.md). Confira também os checks e as
-evidências do último commit da PR antes da ativação.
+[validação do CI](../../docs/validation-ci.md). Antes de alterar este ruleset,
+confira os checks e as evidências do último commit da PR, liste as regras atuais e
+atualize o ruleset existente pelo ID em vez de criar uma duplicata.
 
 Para um administrador, a
 [API oficial de rulesets](https://docs.github.com/en/rest/repos/rules#create-a-repository-ruleset)
@@ -49,10 +46,9 @@ gh api repos/magalz/Arxen/rules/branches/main
 ```
 
 Registre o ID retornado, `enforcement`, alvo, regras, origem esperada do check e
-ausência de bypass na confirmação do servidor. Até essa confirmação, descreva a
-proteção como **configurada no arquivo, aplicação não demonstrada**. Se a conta ou
-credencial não permitir a aplicação, relate o erro específico e mantenha o arquivo
-pronto; não crie uma exceção de bypass ou declare a proteção ativa.
+ausência de bypass na confirmação do servidor. Se uma atualização futura falhar,
+relate o erro específico e mantenha a regra existente; não crie uma exceção de
+bypass para contornar o problema.
 
 O workflow já atende ao evento `merge_group`, mas este ruleset não obriga nem
 ativa uma fila de merge. Mudanças no nome do gate ou na política de proteção

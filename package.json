@@ -37,8 +37,9 @@
     "test": "pnpm test:web && pnpm test:api",
     "check": "pnpm lint && pnpm format:check && pnpm typecheck && pnpm test && pnpm build",
     "check:all": "pnpm check && pnpm test:integration && pnpm test:e2e",
-    "infra:up": "docker compose -f infra/compose.yaml up -d --wait",
-    "infra:down": "docker compose -f infra/compose.yaml down"
+    "infra:config": "podman compose -f infra/compose.yaml config --quiet",
+    "infra:up": "podman compose -f infra/compose.yaml up -d --wait",
+    "infra:down": "podman compose -f infra/compose.yaml down"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",

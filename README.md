@@ -50,4 +50,4 @@ Use exclusivamente fixtures sintéticas. Dados de casos, documentos privados,
 segredos e saídas de execução não pertencem ao repositório.
 
 A [validação inicial](docs/validation-ci.md) registra os resultados locais e do
-GitHub Actions, incluindo a pendência de ativação da proteção de `main`.
+GitHub Actions, o follow-up local com Podman e a ativação da proteção de `main`.

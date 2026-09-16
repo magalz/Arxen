@@ -55,6 +55,9 @@ revise o diff de `uv.lock` antes de sincronizar.
 | `pnpm build`               | Build da web com Vite.                                           |
 | `pnpm check`               | Lint, formato, tipos, unidades e build.                          |
 | `pnpm check:all`           | `check`, integração e E2E; requer banco e Chromium preparados.   |
+| `pnpm infra:config`        | Valida o Compose local pelo provedor configurado no Podman.      |
+| `pnpm infra:up`            | Sobe PostgreSQL/pgvector pelo Podman e aguarda o healthcheck.    |
+| `pnpm infra:down`          | Encerra o stack local preservando o volume nomeado.              |
 
 Para focar o ciclo Red/Green da web, use `pnpm exec vitest run` com o caminho do
 teste e, quando necessário, `-t` com seu nome. Para Python, use
@@ -65,7 +68,7 @@ verificação final usa os scripts completos, com a cobertura habilitada.
 ## Banco e E2E locais
 
 Use o ambiente sintético descrito em [infra/README.md](../infra/README.md).
-Com Docker e Compose disponíveis, no PowerShell:
+Com Podman e um provedor Compose disponíveis, no PowerShell:
 
 ```powershell
 pnpm infra:up
@@ -80,6 +83,10 @@ Em Bash, use `export TEST_DATABASE_URL='postgresql://arxen_test:arxen_test_passw
 no lugar da atribuição PowerShell. O teste de integração deve falhar quando a
 conexão necessária não estiver configurada ou não funcionar; não transformar
 ausência de banco em skip ou sucesso.
+
+No Windows validado em 16/09/2026, `podman compose` delegou ao Docker Compose
+v5.5.1 e aceitou `--wait`. O runtime dos contêineres continuou sendo Podman. O CI
+Linux mantém sua validação declarativa com `docker compose` no runner do GitHub.
 
 Playwright inicia `pnpm dev:api` em `127.0.0.1:8000/healthz` e o build/preview da
 web em `127.0.0.1:4173`. As duas portas precisam estar livres; os testes não
