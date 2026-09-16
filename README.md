@@ -49,5 +49,8 @@ resultados reais de Red/Green/Refactor ou da validação declarativa pertinente.
 Use exclusivamente fixtures sintéticas. Dados de casos, documentos privados,
 segredos e saídas de execução não pertencem ao repositório.
 
+O objetivo de desenvolvimento atual e a decomposição da fundação E00 estão em
+[docs/e00-foundation-plan.md](docs/e00-foundation-plan.md).
+
 A [validação inicial](docs/validation-ci.md) registra os resultados locais e do
 GitHub Actions, o follow-up local com Podman e a ativação da proteção de `main`.

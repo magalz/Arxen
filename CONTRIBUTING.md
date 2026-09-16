@@ -1,8 +1,9 @@
 # Contribuir com o Arxen
 
 Leia [AGENTS.md](AGENTS.md) antes de alterar o repositório e
-[docs/testing.md](docs/testing.md) para o fluxo de testes. A entrega atual prepara
-as ferramentas e seus smokes. Ela não implementa casos, autenticação ou o alpha.
+[docs/testing.md](docs/testing.md) para o fluxo de testes. A infraestrutura inicial
+está pronta; o objetivo de desenvolvimento atual é concluir a E00.1 conforme o
+[plano da fundação](docs/e00-foundation-plan.md).
 
 Use Node.js **26.8.1**, pnpm **12.3.4**, uv **0.12.10** e Python **3.13.12**.
 pnpm é a entrada para o trabalho no projeto; uv mantém Python e dependências na
@@ -23,12 +24,26 @@ Configurações declarativas e documentação recebem validação apropriada.
 
 Abra um PR para `main`, descrevendo problema, resultado e evidência real de
 Red/Green/Refactor ou de validação da configuração. Execute integração e E2E nas
-camadas afetadas; o CI executa todas as camadas em cada PR. O merge depende de
-`CI Gate` e das conversas resolvidas quando o ruleset estiver aplicado.
+camadas afetadas; o CI executa todas as camadas em cada PR. O ruleset ativo da
+`main` exige `CI Gate` aprovado e conversas resolvidas antes do merge.
 
-O autor solo precisa abrir PR, mas a configuração inicial exige **zero aprovações**
-de outros revisores. Não configure hooks que impeçam commits de testes ainda em
-Red. O PR destinado ao merge deve terminar aprovado pelos checks.
+Antes de considerar uma entrega concluída, execute uma revisão técnica em um
+**contexto novo**, separado de quem implementou. O revisor recebe o objetivo/spec,
+o diff final e as evidências de teste e validação. Ele não deve depender da conversa
+de implementação para justificar a aprovação. Para mudanças de banco, migrações ou
+persistência, incluir revisão focada em PostgreSQL/esquema; para superfícies
+sensíveis, acrescentar revisão de segurança. Achados bloqueantes devem ser
+corrigidos e revalidados antes do fechamento da etapa.
+
+Registre na PR a evidência desse review: identificação do contexto/revisor, commit
+ou diff efetivamente revisado, escopo, resultado e resolução dos achados
+bloqueantes. Se a implementação mudar materialmente depois do parecer, o trecho
+alterado precisa de nova revisão em contexto novo antes do fechamento.
+
+O autor solo precisa abrir PR, mas a configuração inicial exige **zero aprovações
+humanas obrigatórias** no GitHub. Isso não dispensa o review técnico em contexto
+novo descrito acima. Não configure hooks que impeçam commits de testes ainda em Red.
+O PR destinado ao merge deve terminar aprovado pelos checks.
 
 Preserve alterações alheias. Use somente fixtures sintéticas e provedores falsos
 determinísticos; os testes não devem chamar APIs externas de modelos. Nunca
@@ -39,3 +54,5 @@ Fixe versões de novas dependências e atualize os lockfiles pelo pnpm/uv. Inclu
 mudanças de configuração, instruções e evidências junto com a alteração que as
 exige. Registre o que não foi executado e o motivo, sem declarar aprovação por
 inferência.
+
+O plano operacional da fundação está em [docs/e00-foundation-plan.md](docs/e00-foundation-plan.md).

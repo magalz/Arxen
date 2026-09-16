@@ -18,3 +18,15 @@ não fabrique uma etapa Red. Registre também verificações não executadas e o
 - [ ] Usei somente dados sintéticos; não incluí acervo real, specs privadas ou segredos.
 - [ ] Executei `pnpm check` e integração/E2E quando pertinentes; anexei os resultados.
 - [ ] A documentação descreve o que foi demonstrado e as limitações restantes.
+
+### Review em contexto novo
+
+- **Contexto/revisor:**
+- **Commit ou diff revisado:**
+- **Escopo do review:**
+- **Resultado:** aprovado / aprovado com observações / bloqueado
+- **Achados bloqueantes e resolução:**
+
+- [ ] O review foi feito em contexto separado daquele que implementou a mudança.
+- [ ] O parecer cobre o commit/diff final ou uma nova revisão foi executada após mudanças materiais.
+- [ ] Todos os achados bloqueantes foram resolvidos e revalidados.

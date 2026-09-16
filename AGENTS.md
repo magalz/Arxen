@@ -15,6 +15,10 @@
 - A stack de partida é React/TypeScript, FastAPI/Python e PostgreSQL/pgvector.
   A infraestrutura inicial não conclui a E00 nem autoriza uso com dados reais.
 - Manter instruções, evidências de validação e estado da implementação atualizados.
+- Revisar entregas em um contexto novo, separado do contexto que implementou a
+  mudança. O revisor deve partir da spec/objetivo, diff e evidências finais, sem
+  depender da conversa de implementação; corrigir achados bloqueantes antes de
+  considerar a etapa concluída.
 - Executar `pnpm check` antes de entregar alterações; executar integração e E2E
   quando pertinentes. Não alegar execução de verificações que não foram realizadas.
 - Novas dependências devem ter versão fixada e lockfile atualizado. Não instalar
