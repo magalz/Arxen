@@ -55,6 +55,9 @@ Os testes de migração e contratos criam bancos temporários únicos e exigem
 permissão `CREATEDB`, disponível no usuário sintético do Compose. Eles não
 apagam nem recriam o banco configurado em `TEST_DATABASE_URL`. Cada fixture
 remove apenas o banco criado por ela; o smoke original usa rollback no banco-base.
+As fixtures de bancos isolados exigem URL sem query parameters ou fragmentos e
+verificam o nome efetivo do banco antes de permitir migrações. Use a URL simples
+do exemplo; parâmetros adicionais são rejeitados explicitamente nessa camada.
 
 `infra:down` remove os contêineres e a rede, preservando o volume nomeado. Mudanças
 nas variáveis iniciais de usuário, banco ou senha não recriam automaticamente um

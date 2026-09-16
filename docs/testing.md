@@ -130,6 +130,16 @@ tem sua própria regressão; o teste de head chama `pnpm db:migrate` em banco va
 grava os cinco contratos, reabre por nova conexão e testa downgrade em banco
 descartável. Rodar qualquer desses testes isoladamente independe da ordem da suíte.
 
+Para essas fixtures, a URL de teste não pode conter query parameters ou fragmentos,
+inclusive parâmetros aparentemente inofensivos como `sslmode`. A validação recusa
+essas formas antes de abrir conexão ou emitir DDL: parâmetros como `dbname`
+poderiam sobrepor o nome temporário ao serem interpretados por outro driver.
+Após criar o banco, a fixture consulta `current_database()` pela URL derivada e
+somente entrega o destino à migração se o nome corresponder ao banco criado.
+Uma divergência interrompe o fluxo e remove apenas o temporário da própria fixture.
+Essa restrição pertence à infraestrutura sintética de testes; não altera o
+contrato geral de `DATABASE_URL` da aplicação.
+
 As migrações usam Alembic 1.20.0 com SQLAlchemy 2.0.54 no grupo Python
 `migration`. O acesso de domínio permanece em `psycopg`; SQLAlchemy está presente
 para o mecanismo de migração, não como decisão de ORM para a aplicação.

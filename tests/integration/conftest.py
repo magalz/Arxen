@@ -42,8 +42,12 @@ def connection(database_url: str) -> Iterator[psycopg.Connection[tuple[object, .
 @contextmanager
 def temporary_database(base_url: str) -> Iterator[str]:
     """Create and drop only our own database; never reset the configured base."""
-    name = f"arxen_contract_test_{uuid4().hex}"
     parsed = urlsplit(base_url)
+    if parsed.query or parsed.fragment:
+        raise ValueError(
+            "Isolated test database URLs must not contain query parameters or fragments"
+        )
+    name = f"arxen_contract_test_{uuid4().hex}"
     isolated_url = urlunsplit(parsed._replace(path=f"/{name}"))
     with psycopg.connect(base_url, autocommit=True, connect_timeout=5) as admin:
         admin.execute(
@@ -52,6 +56,11 @@ def temporary_database(base_url: str) -> Iterator[str]:
             )
         )
         try:
+            with psycopg.connect(
+                isolated_url, autocommit=True, connect_timeout=5
+            ) as probe:
+                if probe.execute("SELECT current_database()").fetchone() != (name,):
+                    raise RuntimeError("Isolated database destination mismatch")
             yield isolated_url
         finally:
             admin.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(name)))

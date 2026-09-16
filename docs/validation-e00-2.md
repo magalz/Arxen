@@ -56,6 +56,7 @@ do Compose. `--tb=short` ou `--tb=line` apenas limitou a apresentação dos trac
 | `test_core_sources.py`                           | 15 failed | 15 passed                      | Localizador Unicode, trecho exato, mesmo caso e referência preservada                                  |
 | `test_core_tasks.py`                             | 20 failed | 20 passed                      | Draft, 11 estados, objetivo, FK e múltiplas tarefas por caso                                           |
 | `test_core_events.py` + `test_core_contracts.py` | 20 failed | 20 passed                      | Ordem, cursor, FK composta, JSON objeto, banco vazio, commit/reabertura e rollback dos cinco contratos |
+| `test_database_isolation.py`                     | 9 failed  | 9 passed                       | URL ambígua rejeitada antes de I/O, destino efetivo conferido e banco-base preservado                  |
 
 A regressão da revisão inicial passou isoladamente (`1 passed`). Uma tentativa
 anterior de conexão à porta 5433 falhou por timeout e não foi tratada como Red.
@@ -64,9 +65,10 @@ foi preservado.
 
 Os checkpoints de teste no Git são `6a10e47`, `c9272ab`, `22461b5`, `a42e797` e
 `e94b186`. Eles preservam os stubs e os testes antes do Green da respectiva
-persistência. O snapshot final é cumulativo: base temporal e seis arquivos de
-integração. `pnpm tdd:guard:verify` confirmou os sete arquivos intactos após
-implementar eventos. Nenhum snapshot foi limpo para contornar alteração.
+persistência. O snapshot após esses contratos tinha sete arquivos. O checkpoint
+`8a03f36` acrescentou a regressão de isolamento encontrada no review antes da
+correção. O snapshot final é cumulativo, com oito arquivos intactos. Nenhum
+snapshot foi limpo para contornar alteração.
 
 ## Migração e transações
 
@@ -80,6 +82,9 @@ cinco registros visível.
 O downgrade foi exercitado somente em banco temporário: retorna à revisão inicial,
 preserva pgvector e permite aplicar o head novamente. Ele remove as tabelas e seus
 dados; não é uma estratégia de rollback de dados de produção.
+
+O banco sintético do Compose local também recebeu `pnpm db:migrate` sem erro;
+`pnpm db:current` confirmou `20260916_0002 (head)`.
 
 ## Cobertura por camada
 
@@ -97,6 +102,33 @@ fresh-context review do diff final.
 
 Não houve dependência nova, adoção de ORM ou mudança de lockfile.
 
+## Achado da primeira revisão e correção
+
+O worker-2, novo contexto somente leitura, revisou o commit `1421441` contra
+`ff542c0` e emitiu **REJECT** por um HIGH na fixture `temporary_database`. A query
+da URL era preservada ao substituir o caminho; um parâmetro como `dbname` podia
+voltar a selecionar o banco-base no SQLAlchemy e expô-lo ao downgrade do teste.
+O parecer foi registrado na PR #5. Nenhum outro achado material de domínio ou
+antecipação de E00.3/E01 foi informado nessa revisão.
+
+A correção recebeu um arquivo novo de regressão, mantendo os sete anteriores
+intactos. Sete cenários observaram a tentativa indevida de I/O antes de rejeitar
+URLs com query/fragmento; outros dois observaram aceitação do override e ausência
+de verificação do destino. O Red terminou com `9 failed` e foi congelado antes
+da mudança da fixture. Os testes usam spies para impedir conexões indesejadas e
+bancos pais que também são temporários; não executam downgrade em URI ambígua.
+
+A fixture agora rejeita qualquer query ou fragmento antes de acessar o banco e
+confere `SELECT current_database()` antes de entregar a URL isolada. O teste de
+destino divergente usa uma conexão real deliberadamente encaminhada ao banco pai
+descartável e prova a rejeição e a limpeza do temporário. O Green terminou com
+`9 passed`; nenhum teste congelado foi alterado para passar.
+
+Essa política também rejeita `sslmode` na query da URL dessas fixtures. O Compose
+local e o CI usam URLs simples. A configuração geral `DATABASE_URL` e os contratos
+da aplicação permanecem inalterados. O novo SHA deve receber CI e outro
+fresh-context review, registrados na PR, antes de sua aprovação final.
+
 ## Validação consolidada e revisão
 
 Validação local em 16/09/2026:
@@ -106,8 +138,8 @@ Validação local em 16/09/2026:
 | `pnpm check`                    | Exit 0: guard, lint, formato, tipos, unidades e build   |
 | `pnpm test:api` dentro do check | 16 passed; cobertura de 95,45% no escopo unitário       |
 | `pnpm test:web` dentro do check | 1 passed; cobertura de 100%                             |
-| `pnpm test:integration`         | 78 passed; cobertura de 100% de `arxen_api.persistence` |
-| `pnpm tdd:guard:verify`         | 7 arquivos congelados intactos                          |
+| `pnpm test:integration`         | 87 passed; cobertura de 100% de `arxen_api.persistence` |
+| `pnpm tdd:guard:verify`         | 8 arquivos congelados intactos                          |
 | `git diff --check`              | Exit 0                                                  |
 
 O percurso web e os endpoints existentes não foram alterados, portanto o E2E local
@@ -125,6 +157,7 @@ Hashes SHA-256 do snapshot final, mantidos desde os Reds correspondentes:
 09683f8220aa3cefebda2da35a391e2371ea66b5a0a837d2be7a58fed5e92e4b  tests/integration/test_core_messages.py
 e12399f06d47a2646a3a19bcb767df0dc509caf7e59790af68e31bb242ac00d1  tests/integration/test_core_sources.py
 b58e2c2f4bfc8bcde07ce63bf8da962a433b3049933699a76358c88c453a1b96  tests/integration/test_core_tasks.py
+4b6c5f3a95fbddc03f2762029a771dbf43b860a48f540c943c6f4099a3094a39  tests/integration/test_database_isolation.py
 ```
 
 E00.3 ainda não começou. Autorização, identidade, fontes documentais, execução de
