@@ -89,6 +89,17 @@ teste e, quando necessário, `-t` com seu nome. Para Python, use
 usado nessa execução focada para separar a assertion dos limiares da suíte; a
 verificação final usa os scripts completos, com a cobertura habilitada.
 
+Desde a E00.2, há dois gates complementares de cobertura Python, ambos em 85%:
+as unidades medem os módulos da API, exceto `arxen_api.persistence`; a integração
+mede exatamente esse módulo SQL contra PostgreSQL real, com branches habilitados.
+A exclusão unitária é específica a esse arquivo, não a uma pasta genérica. Novos
+módulos continuam sujeitos ao gate unitário até uma decisão explícita de camada.
+As configurações ficam em `pyproject.toml` e `tests/integration/coverage.ini`.
+`pnpm check` verifica o primeiro gate; `pnpm test:integration` verifica o segundo.
+O CI Gate exige ambos. Não substituir a integração por mocks para aumentar a
+cobertura aparente. Os relatórios são separados em `coverage/api/` e
+`coverage/integration/`, com arquivos de dados de cobertura distintos.
+
 ## Banco e E2E locais
 
 Use o ambiente sintético descrito em [infra/README.md](../infra/README.md).
@@ -109,6 +120,15 @@ Em Bash, use `export TEST_DATABASE_URL='postgresql://arxen_test:arxen_test_passw
 no lugar da atribuição PowerShell. O teste de integração deve falhar quando a
 conexão necessária não estiver configurada ou não funcionar; não transformar
 ausência de banco em skip ou sucesso.
+
+Os testes de migração e contratos criam bancos temporários com nomes únicos a
+partir da conexão de teste, usando `template0`. O usuário sintético precisa de
+`CREATEDB` e da permissão necessária para habilitar pgvector. A fixture remove
+somente o banco que criou, após fechar as conexões. Ela não reseta o banco-base
+configurado e não faz fallback para ele se faltar permissão. A revisão inicial
+tem sua própria regressão; o teste de head chama `pnpm db:migrate` em banco vazio,
+grava os cinco contratos, reabre por nova conexão e testa downgrade em banco
+descartável. Rodar qualquer desses testes isoladamente independe da ordem da suíte.
 
 As migrações usam Alembic 1.20.0 com SQLAlchemy 2.0.54 no grupo Python
 `migration`. O acesso de domínio permanece em `psycopg`; SQLAlchemy está presente
@@ -164,6 +184,9 @@ Antes do upload, cada job de qualidade exige arquivos não vazios de JUnit web/A
 LCOV web, cobertura XML da API e HTML do build. Um comando que termine sem erro,
 mas não gere suas evidências, deve reprovar o job. O setup também confere que
 `pnpm --version` retorna a versão fixada.
+
+O job de integração exige JUnit e cobertura XML não vazios, além do gate de 85%
+da persistência. Os relatórios XML/HTML de integração acompanham seu artefato.
 
 O token do workflow tem somente `contents: read`; o checkout não persiste suas
 credenciais. Novos commits cancelam a execução anterior do mesmo PR. Cada job tem

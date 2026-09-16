@@ -19,6 +19,7 @@ def upgrade() -> None:
             id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
             title text NOT NULL CHECK (btrim(title) <> ''),
             message_sequence bigint NOT NULL DEFAULT 0 CHECK (message_sequence >= 0),
+            event_sequence bigint NOT NULL DEFAULT 0 CHECK (event_sequence >= 0),
             created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP
         )
         """
@@ -148,9 +149,58 @@ def upgrade() -> None:
         )
         """
     )
+    op.execute(
+        """
+        CREATE TABLE events (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            case_id uuid NOT NULL REFERENCES cases(id),
+            sequence bigint NOT NULL CHECK (sequence > 0),
+            event_type text NOT NULL CHECK (btrim(event_type) <> ''),
+            actor text NOT NULL CHECK (btrim(actor) <> ''),
+            task_id uuid,
+            payload jsonb NOT NULL DEFAULT '{}'::jsonb
+                CHECK (jsonb_typeof(payload) = 'object'),
+            created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (case_id, sequence),
+            CONSTRAINT events_task_case_fk FOREIGN KEY (case_id, task_id)
+                REFERENCES tasks(case_id, id)
+        )
+        """
+    )
+    op.execute("CREATE INDEX events_task_idx ON events(case_id, task_id)")
+    op.execute(
+        """
+        CREATE FUNCTION assign_event_sequence() RETURNS trigger
+        LANGUAGE plpgsql SET search_path = pg_catalog, public AS $$
+        BEGIN
+            IF NEW.sequence IS NOT NULL THEN
+                RAISE EXCEPTION 'Event sequence is assigned by the server'
+                    USING ERRCODE = '23514';
+            END IF;
+            UPDATE cases SET event_sequence = event_sequence + 1
+                WHERE id = NEW.case_id RETURNING event_sequence INTO NEW.sequence;
+            IF NOT FOUND THEN
+                RAISE EXCEPTION 'Event requires an existing case'
+                    USING ERRCODE = '23503';
+            END IF;
+            RETURN NEW;
+        END;
+        $$
+        """
+    )
+    op.execute(
+        "CREATE TRIGGER events_sequence BEFORE INSERT ON events "
+        "FOR EACH ROW EXECUTE FUNCTION assign_event_sequence()"
+    )
+    op.execute(
+        "CREATE TRIGGER events_preserve_history BEFORE UPDATE OR DELETE ON events "
+        "FOR EACH ROW EXECUTE FUNCTION prevent_history_mutation()"
+    )
 
 
 def downgrade() -> None:
+    op.execute("DROP TABLE events")
+    op.execute("DROP FUNCTION assign_event_sequence()")
     op.execute("DROP TABLE tasks")
     op.execute("DROP TABLE sources")
     op.execute("DROP FUNCTION validate_message_source()")

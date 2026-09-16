@@ -8,6 +8,7 @@ from uuid import UUID
 
 import psycopg
 from psycopg.rows import class_row
+from psycopg.types.json import Jsonb
 
 from arxen_api.contracts import Case, Event, Message, MessageRole, Source, Task
 
@@ -112,7 +113,30 @@ class CoreRepository:
         task_id: UUID | None = None,
         payload: dict[str, object] | None = None,
     ) -> Event:
-        raise NotImplementedError("Event persistence is not implemented")
+        with self.connection.cursor(row_factory=class_row(Event)) as cursor:
+            cursor.execute(
+                "INSERT INTO events (case_id, event_type, actor, task_id, payload) "
+                "VALUES (%s, %s, %s, %s, %s) "
+                "RETURNING id, case_id, sequence, event_type, actor, task_id, "
+                "payload, created_at",
+                (
+                    case_id,
+                    event_type,
+                    actor,
+                    task_id,
+                    Jsonb({} if payload is None else payload),
+                ),
+            )
+            event = cursor.fetchone()
+            assert event is not None
+            return event
 
     def list_events(self, case_id: UUID, *, after_sequence: int = 0) -> list[Event]:
-        raise NotImplementedError("Event reading is not implemented")
+        with self.connection.cursor(row_factory=class_row(Event)) as cursor:
+            cursor.execute(
+                "SELECT id, case_id, sequence, event_type, actor, task_id, "
+                "payload, created_at FROM events "
+                "WHERE case_id = %s AND sequence > %s ORDER BY sequence",
+                (case_id, after_sequence),
+            )
+            return cursor.fetchall()

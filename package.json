@@ -30,7 +30,7 @@
     "test:web": "vitest run --coverage",
     "test:web:watch": "vitest",
     "test:api": "uv run --locked pytest services/api/tests",
-    "test:integration": "uv run --locked --group migration pytest tests/integration --no-cov",
+    "test:integration": "uv run --locked --group migration pytest tests/integration",
     "test:e2e": "playwright test",
     "test:e2e:install": "playwright install chromium",
     "test:e2e:install:ci": "playwright install --with-deps chromium",
