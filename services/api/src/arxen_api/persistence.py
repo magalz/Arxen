@@ -34,6 +34,12 @@ class CoreRepository:
             )
             return cursor.fetchone()
 
+    def create_owned_case(self, owner_user_id: UUID, title: str = "Novo caso") -> Case:
+        raise NotImplementedError("Synthetic case creation is not implemented")
+
+    def get_owned_case(self, owner_user_id: UUID, case_id: UUID) -> Case | None:
+        raise NotImplementedError("Synthetic case lookup is not implemented")
+
     def add_message(self, case_id: UUID, role: MessageRole, content: str) -> Message:
         with self.connection.cursor(row_factory=class_row(Message)) as cursor:
             cursor.execute(

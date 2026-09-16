@@ -54,6 +54,41 @@ verificado após o merge; os hashes históricos permanecem em sua documentação
 Mudanças necessárias em expectativas de versão de migração exigem justificativa
 e revisão separada, preservando os cenários de integridade anteriores.
 
+### Retomada e decisões do recorte
+
+Na retomada, a branch e a PR #6 foram conferidas em `f36ad08`, com árvore limpa
+e os dez arquivos do guard intactos. A identidade do coordenador foi recuperada;
+não havia worker responsável pela implementação restante.
+
+Os próximos slices são: evolução revisada do teste de head; migração e vínculo
+persistente; criação/consulta HTTP; validação e revisão do diff final. A estrutura
+proposta é uma tabela exclusiva do adaptador sintético, com uma linha por caso,
+FK para `cases` e UUID de responsável configurado no servidor. Ela permite manter
+casos internos da E00.2 sem atribuição e sem acesso pelas novas rotas.
+
+O corpo de criação admite somente título, omitível com o provisório `Novo caso`.
+A API retornará ID, título e instante persistidos. Formato do título e tratamento
+de valores inválidos foram fixados nos testes: corpo JSON obrigatório, `{}` aceito,
+string estrita com espaços externos removidos, entre 1 e 200 caracteres, sem NUL
+ou Unicode inválido. `null`, outros tipos e campos extras recebem 422. Identidade
+no corpo não será aceita; header ou query não alterarão o responsável validado.
+
+São requisitos desta etapa a atomicidade, releitura entre aplicações, escopo de
+responsável e upgrade que preserve dados antigos. Revisões para edição, fase,
+objetivo, listagem, idempotência de criações e autenticação de produção pertencem
+aos próximos recortes. A escolha do provedor OIDC permanece aberta para E01.
+
+### Correção proposta do teste de head
+
+`test_core_contracts.py` executa `pnpm db:migrate`, que avança até o head, mas
+compara a versão a `20260916_0002`. Uma nova revisão torna essa expectativa fixa
+incompatível com o comando. A proposta submetida à revisão independente é obter
+o head dos scripts Alembic versionados, sem usar o banco como resultado esperado,
+preservando cada assertion de contratos, transações, extensão e downgrade.
+Um teste específico novo deve provar a revisão seguinte e seu upgrade desde a
+E00.2. A falha incidental da versão não será usada como Red de responsabilidade.
+O arquivo congelado só será alterado após parecer separado sobre a correção.
+
 ## Limites
 
 A E00.4 ainda não começou. Não há sessão de produção, login OIDC, organizações,
