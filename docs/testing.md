@@ -58,6 +58,8 @@ revise o diff de `uv.lock` antes de sincronizar.
 | `pnpm infra:config`        | Valida o Compose local pelo provedor configurado no Podman.      |
 | `pnpm infra:up`            | Sobe PostgreSQL/pgvector pelo Podman e aguarda o healthcheck.    |
 | `pnpm infra:down`          | Encerra o stack local preservando o volume nomeado.              |
+| `pnpm db:migrate`          | Aplica as migrações Alembic até `head`; exige `DATABASE_URL`.    |
+| `pnpm db:current`          | Mostra a revisão Alembic atual; exige `DATABASE_URL`.            |
 
 Para focar o ciclo Red/Green da web, use `pnpm exec vitest run` com o caminho do
 teste e, quando necessário, `-t` com seu nome. Para Python, use
@@ -72,6 +74,8 @@ Com Podman e um provedor Compose disponíveis, no PowerShell:
 
 ```powershell
 pnpm infra:up
+$env:DATABASE_URL = 'postgresql://arxen_test:arxen_test_password@127.0.0.1:5433/arxen_test'
+pnpm db:migrate
 $env:TEST_DATABASE_URL = 'postgresql://arxen_test:arxen_test_password@127.0.0.1:5433/arxen_test'
 pnpm test:integration
 pnpm test:e2e:install
@@ -83,6 +87,10 @@ Em Bash, use `export TEST_DATABASE_URL='postgresql://arxen_test:arxen_test_passw
 no lugar da atribuição PowerShell. O teste de integração deve falhar quando a
 conexão necessária não estiver configurada ou não funcionar; não transformar
 ausência de banco em skip ou sucesso.
+
+As migrações usam Alembic 1.20.0 com SQLAlchemy 2.0.54 no grupo Python
+`migration`. O acesso de domínio permanece em `psycopg`; SQLAlchemy está presente
+para o mecanismo de migração, não como decisão de ORM para a aplicação.
 
 No Windows validado em 16/09/2026, `podman compose` delegou ao Docker Compose
 v5.5.1 e aceitou `--wait`. O runtime dos contêineres continuou sendo Podman. O CI

@@ -43,8 +43,10 @@ A branch de trabalho inicial é `feat/e00-foundation`. O objetivo atual é encer
 
 ### Escopo obrigatório
 
-1. Escolher e fixar a ferramenta de migração compatível com Python/FastAPI e o
-   fluxo `pnpm` + `uv` já adotado.
+1. Usar **Alembic 1.20.0** como ferramenta de migração, com SQLAlchemy 2.0.54
+   somente como base técnica do migrador. Ambos são open source sob licença MIT.
+   O domínio continua usando `psycopg`; a adoção do Alembic não implica adoção do
+   ORM do SQLAlchemy.
 2. Introduzir configuração tipada para os valores necessários à aplicação e às
    migrações, sem versionar `.env` ou segredos.
 3. Criar migração inicial versionada para o menor esquema necessário à próxima
