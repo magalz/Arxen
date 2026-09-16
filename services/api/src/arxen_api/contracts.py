@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from typing import Literal
 from uuid import UUID
 
 
@@ -21,3 +22,14 @@ class StoredRecord:
 @dataclass(frozen=True, kw_only=True)
 class Case(StoredRecord):
     title: str
+
+
+type MessageRole = Literal["user", "assistant"]
+
+
+@dataclass(frozen=True, kw_only=True)
+class Message(StoredRecord):
+    case_id: UUID
+    sequence: int
+    role: MessageRole
+    content: str
