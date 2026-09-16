@@ -22,6 +22,21 @@ falha pelo motivo esperado. Implemente o mínimo, execute o mesmo teste e refato
 com a suíte aprovada. Para corrigir um bug, comece pelo teste de regressão.
 Configurações declarativas e documentação recebem validação apropriada.
 
+Assim que o Red for válido, congele os testes que o demonstraram:
+
+```text
+pnpm tdd:guard:record -- services/api/tests/test_exemplo.py
+pnpm tdd:guard:verify
+```
+
+O agente implementador não modifica esses testes até obter Green. `pnpm check`
+executa `tdd:guard:verify` automaticamente quando existe snapshot ativo em
+`.artifacts/tdd-guard.json`. Se um teste tiver sido especificado incorretamente,
+pare a implementação e trate a correção do teste como uma decisão separada: registre
+o motivo, revise a mudança do teste, execute um novo Red e grave um novo snapshot.
+Não enfraqueça assertion, remova caso, adicione skip ou limpe o guard para fazer a
+implementação passar.
+
 Abra um PR para `main`, descrevendo problema, resultado e evidência real de
 Red/Green/Refactor ou de validação da configuração. Execute integração e E2E nas
 camadas afetadas; o CI executa todas as camadas em cada PR. O ruleset ativo da
@@ -55,4 +70,12 @@ mudanças de configuração, instruções e evidências junto com a alteração 
 exige. Registre o que não foi executado e o motivo, sem declarar aprovação por
 inferência.
 
+Na seleção de ferramentas, a preferência do projeto é por alternativas open source
+e sem custo de licença. Avalie maturidade, manutenção, compatibilidade, custo
+operacional e quantidade de dependências; entre opções equivalentes, use a solução
+mais simples. Dependência proprietária ou paga precisa de vantagem concreta que a
+alternativa aberta não entregue ou de decisão explícita do projeto.
+
 O plano operacional da fundação está em [docs/e00-foundation-plan.md](docs/e00-foundation-plan.md).
+Os guardrails de engenharia estão em
+[docs/engineering-guardrails.md](docs/engineering-guardrails.md).

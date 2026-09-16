@@ -6,6 +6,13 @@
   implementar o mínimo e refatorar. Registrar comandos e resultados. Falha de
   importação, dependência ou infraestrutura não demonstra a falha do comportamento.
   Configuração declarativa exige validação apropriada, não testes artificiais.
+- Depois de observar um Red válido, o agente que implementa **não pode editar,
+  apagar, renomear, pular ou enfraquecer esse teste para acomodar o código** antes
+  do Green. Registrar o snapshot com `pnpm tdd:guard:record -- <teste...>` e manter
+  `pnpm tdd:guard:verify` aprovado. Se o teste estiver errado ou a spec mudar,
+  interromper a implementação: a alteração do teste exige justificativa explícita,
+  revisão separada da correção do teste, novo Red válido e novo snapshot antes de
+  retomar a implementação. Não usar `tdd:guard:clear` para contornar uma violação.
 - Ler implementação e consumidores antes de editar; preservar alterações alheias.
 - Testar unidade, integração e ponta a ponta nas camadas pertinentes. Corrigir
   bugs com testes de regressão. Não usar testes vazios, `.only`, skips injustificados
@@ -24,3 +31,8 @@
 - Novas dependências devem ter versão fixada e lockfile atualizado. Não instalar
   dependências do projeto globalmente. Os checks de PR devem permanecer sem
   segredos de produção ou chamadas pagas a modelos.
+- Ao escolher ferramentas ou dependências, preferir soluções open source, sem custo
+  de licença, maduras, mantidas e compatíveis com a stack. Entre alternativas que
+  atendem ao requisito, escolher a de menor complexidade operacional e menor número
+  de dependências. Produto proprietário ou pago só entra quando houver benefício
+  material não atendido pela alternativa aberta ou decisão explícita do projeto.

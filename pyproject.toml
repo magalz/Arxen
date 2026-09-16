@@ -37,6 +37,7 @@ module-root = "services/api/src"
 [tool.pytest.ini_options]
 minversion = "9.1"
 testpaths = ["services/api/tests"]
+pythonpath = ["."]
 addopts = [
     "--strict-config",
     "--strict-markers",
