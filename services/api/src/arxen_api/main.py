@@ -1,9 +1,11 @@
 """ASGI application entrypoint."""
 
+from collections.abc import Mapping
+
 from fastapi import FastAPI
 
 
-def create_app() -> FastAPI:
+def create_app(environ: Mapping[str, str] | None = None) -> FastAPI:
     """Create an independent application instance."""
     application = FastAPI()
 
