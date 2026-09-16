@@ -4,8 +4,9 @@ Assistente jurídico para advogados no Brasil.
 
 Este repositório contém a infraestrutura inicial de desenvolvimento: web mínima
 em React/TypeScript, API FastAPI, testes de unidade, integração PostgreSQL/pgvector
-e smoke de navegador. As funcionalidades jurídicas e a fundação funcional E00
-ainda serão implementadas.
+e smoke de navegador. A E00.1 adiciona configuração tipada e migrações Alembic;
+as demais subetapas da fundação funcional e as funcionalidades jurídicas seguem
+como próximas entregas.
 
 Todo comportamento será desenvolvido com TDD: teste significativo, falha esperada,
 implementação mínima e refatoração com os testes passando.
@@ -48,6 +49,13 @@ Leia [CONTRIBUTING.md](CONTRIBUTING.md), [AGENTS.md](AGENTS.md) e
 resultados reais de Red/Green/Refactor ou da validação declarativa pertinente.
 Use exclusivamente fixtures sintéticas. Dados de casos, documentos privados,
 segredos e saídas de execução não pertencem ao repositório.
+
+Os critérios de seleção de ferramentas, congelamento dos testes após Red válido e
+review em contexto novo estão em
+[docs/engineering-guardrails.md](docs/engineering-guardrails.md).
+
+O objetivo de desenvolvimento atual e a decomposição da fundação E00 estão em
+[docs/e00-foundation-plan.md](docs/e00-foundation-plan.md).
 
 A [validação inicial](docs/validation-ci.md) registra os resultados locais e do
 GitHub Actions, o follow-up local com Podman e a ativação da proteção de `main`.

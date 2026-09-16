@@ -16,6 +16,25 @@ análise jurídica ou uso com dados reais.
 3. **Refactor:** ajuste estrutura e duplicações, mantendo os testes aprovados.
    Registre os comandos finais, resultados e limites da validação.
 
+Depois que o Red falhar pelo motivo comportamental esperado, o teste passa a ser a
+referência fixa do ciclo. O agente implementador não pode alterar esse teste para
+acomodar sua solução. Registre os arquivos com:
+
+```text
+pnpm tdd:guard:record -- caminho/do/teste.py caminho/outro.test.ts
+```
+
+O snapshot fica em `.artifacts/tdd-guard.json`, fora do Git. `pnpm check` executa
+`pnpm tdd:guard:verify`; se qualquer teste registrado for alterado ou removido, a
+verificação falha. Após o Green e as verificações finais, `pnpm tdd:guard:clear`
+encerra o snapshot. O agente não pode limpar o guard para evitar uma falha.
+
+Se o teste for realmente incorreto, interrompa o ciclo de implementação. Documente
+o problema, revise a correção do teste separadamente, faça a alteração, observe um
+novo Red válido e registre um novo snapshot antes de continuar. Mudança de spec
+segue a mesma regra. Isso permite corrigir testes errados sem transformar o teste
+em uma variável ajustável à implementação.
+
 Inclua no PR os comandos exatos e trechos curtos dos resultados reais, com o teste
 e a assertion que falhou em Red, o resultado em Green e a verificação após a
 refatoração. A cronologia é evidência do trabalho e da revisão: **CI aprovado não
@@ -41,23 +60,28 @@ pnpm python:sync
 Para alterações intencionais de dependências Python, use `pnpm python:lock` e
 revise o diff de `uv.lock` antes de sincronizar.
 
-| Comando                    | Verificação                                                      |
-| -------------------------- | ---------------------------------------------------------------- |
-| `pnpm lint`                | ESLint e Ruff.                                                   |
-| `pnpm format:check`        | Prettier e Ruff format, sem editar arquivos.                     |
-| `pnpm typecheck`           | TypeScript e mypy.                                               |
-| `pnpm test:web`            | Vitest em execução única, JUnit e cobertura.                     |
-| `pnpm test:api`            | pytest de unidade da API com cobertura.                          |
-| `pnpm test:integration`    | pytest com PostgreSQL/pgvector reais; exige `TEST_DATABASE_URL`. |
-| `pnpm test:e2e:install`    | Instala o Chromium usado pelo Playwright no ambiente local.      |
-| `pnpm test:e2e:install:ci` | Instala Chromium e dependências do sistema no CI Linux.          |
-| `pnpm test:e2e`            | Playwright Chromium com API e web iniciadas pela configuração.   |
-| `pnpm build`               | Build da web com Vite.                                           |
-| `pnpm check`               | Lint, formato, tipos, unidades e build.                          |
-| `pnpm check:all`           | `check`, integração e E2E; requer banco e Chromium preparados.   |
-| `pnpm infra:config`        | Valida o Compose local pelo provedor configurado no Podman.      |
-| `pnpm infra:up`            | Sobe PostgreSQL/pgvector pelo Podman e aguarda o healthcheck.    |
-| `pnpm infra:down`          | Encerra o stack local preservando o volume nomeado.              |
+| Comando                                | Verificação                                                      |
+| -------------------------------------- | ---------------------------------------------------------------- |
+| `pnpm lint`                            | ESLint e Ruff.                                                   |
+| `pnpm format:check`                    | Prettier e Ruff format, sem editar arquivos.                     |
+| `pnpm typecheck`                       | TypeScript e mypy.                                               |
+| `pnpm test:web`                        | Vitest em execução única, JUnit e cobertura.                     |
+| `pnpm test:api`                        | pytest de unidade da API com cobertura.                          |
+| `pnpm test:integration`                | pytest com PostgreSQL/pgvector reais; exige `TEST_DATABASE_URL`. |
+| `pnpm test:e2e:install`                | Instala o Chromium usado pelo Playwright no ambiente local.      |
+| `pnpm test:e2e:install:ci`             | Instala Chromium e dependências do sistema no CI Linux.          |
+| `pnpm test:e2e`                        | Playwright Chromium com API e web iniciadas pela configuração.   |
+| `pnpm tdd:guard:record -- <testes...>` | Congela hashes dos testes após um Red válido.                    |
+| `pnpm tdd:guard:verify`                | Falha se um teste Red congelado foi alterado/removido.           |
+| `pnpm tdd:guard:clear`                 | Encerra o snapshot após Green e verificações finais.             |
+| `pnpm build`                           | Build da web com Vite.                                           |
+| `pnpm check`                           | Lint, formato, tipos, unidades e build.                          |
+| `pnpm check:all`                       | `check`, integração e E2E; requer banco e Chromium preparados.   |
+| `pnpm infra:config`                    | Valida o Compose local pelo provedor configurado no Podman.      |
+| `pnpm infra:up`                        | Sobe PostgreSQL/pgvector pelo Podman e aguarda o healthcheck.    |
+| `pnpm infra:down`                      | Encerra o stack local preservando o volume nomeado.              |
+| `pnpm db:migrate`                      | Aplica as migrações Alembic até `head`; exige `DATABASE_URL`.    |
+| `pnpm db:current`                      | Mostra a revisão Alembic atual; exige `DATABASE_URL`.            |
 
 Para focar o ciclo Red/Green da web, use `pnpm exec vitest run` com o caminho do
 teste e, quando necessário, `-t` com seu nome. Para Python, use
@@ -72,6 +96,8 @@ Com Podman e um provedor Compose disponíveis, no PowerShell:
 
 ```powershell
 pnpm infra:up
+$env:DATABASE_URL = 'postgresql://arxen_test:arxen_test_password@127.0.0.1:5433/arxen_test'
+pnpm db:migrate
 $env:TEST_DATABASE_URL = 'postgresql://arxen_test:arxen_test_password@127.0.0.1:5433/arxen_test'
 pnpm test:integration
 pnpm test:e2e:install
@@ -83,6 +109,10 @@ Em Bash, use `export TEST_DATABASE_URL='postgresql://arxen_test:arxen_test_passw
 no lugar da atribuição PowerShell. O teste de integração deve falhar quando a
 conexão necessária não estiver configurada ou não funcionar; não transformar
 ausência de banco em skip ou sucesso.
+
+As migrações usam Alembic 1.20.0 com SQLAlchemy 2.0.54 no grupo Python
+`migration`. O acesso de domínio permanece em `psycopg`; SQLAlchemy está presente
+para o mecanismo de migração, não como decisão de ORM para a aplicação.
 
 No Windows validado em 16/09/2026, `podman compose` delegou ao Docker Compose
 v5.5.1 e aceitou `--wait`. O runtime dos contêineres continuou sendo Podman. O CI

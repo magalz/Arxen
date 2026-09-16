@@ -18,6 +18,10 @@ dev = [
     "pytest-cov==7.1.0",
     "ruff==0.16.8",
 ]
+migration = [
+    "alembic==1.20.0",
+    "sqlalchemy==2.0.54",
+]
 
 [build-system]
 requires = ["uv_build==0.12.10"]
@@ -33,6 +37,7 @@ module-root = "services/api/src"
 [tool.pytest.ini_options]
 minversion = "9.1"
 testpaths = ["services/api/tests"]
+pythonpath = ["."]
 addopts = [
     "--strict-config",
     "--strict-markers",
@@ -68,3 +73,7 @@ select = ["E", "F", "I", "UP", "B"]
 python_version = "3.13"
 strict = true
 files = ["services/api/src"]
+
+[tool.alembic]
+script_location = "%(here)s/migrations"
+prepend_sys_path = ["."]

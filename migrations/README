@@ -1,0 +1,4 @@
+Arxen database migrations are managed by Alembic.
+
+Database connectivity comes from DATABASE_URL through arxen_api.settings.
+Run migrations through the root pnpm scripts rather than invoking Alembic directly.

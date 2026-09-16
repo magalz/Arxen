@@ -38,10 +38,17 @@ e exercita a extensão `vector`; disponibilidade da porta sozinha não demonstra
 No PowerShell, defina a conexão e execute:
 
 ```powershell
+$env:DATABASE_URL = 'postgresql://arxen_test:arxen_test_password@127.0.0.1:5433/arxen_test'
+pnpm db:migrate
+pnpm db:current
 $env:TEST_DATABASE_URL = 'postgresql://arxen_test:arxen_test_password@127.0.0.1:5433/arxen_test'
 pnpm test:integration
 pnpm infra:down
 ```
+
+`DATABASE_URL` é a configuração usada pela aplicação/migrações. O Alembic é
+executado pela `.venv` via `uv` e configurado no `pyproject.toml`; a revisão inicial
+habilita somente a extensão `vector`. As tabelas de domínio começam na E00.2.
 
 `infra:down` remove os contêineres e a rede, preservando o volume nomeado. Mudanças
 nas variáveis iniciais de usuário, banco ou senha não recriam automaticamente um
