@@ -7,11 +7,12 @@ from pathlib import Path
 
 import psycopg
 import pytest
+from alembic.config import Config
+from alembic.script import ScriptDirectory
 
 from arxen_api.persistence import CoreRepository
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
-CORE_REVISION = "20260916_0002"
 
 
 def run_pnpm(database_url: str, *arguments: str) -> subprocess.CompletedProcess[str]:
@@ -31,6 +32,11 @@ def run_pnpm(database_url: str, *arguments: str) -> subprocess.CompletedProcess[
 
 
 def test_empty_database_migrates_and_reopens_all_contracts(empty_database_url) -> None:
+    scripts = ScriptDirectory.from_config(
+        Config(toml_file=PROJECT_ROOT / "pyproject.toml")
+    )
+    expected_head = scripts.get_current_head()
+    assert expected_head is not None
     with psycopg.connect(empty_database_url) as connection:
         assert (
             connection.execute(
@@ -67,8 +73,15 @@ def test_empty_database_migrates_and_reopens_all_contracts(empty_database_url) -
         assert repository.get_task(case.id, task.id) == task
         assert repository.list_events(case.id) == [event]
         assert reopened.execute(
+            "SELECT tablename FROM pg_tables WHERE schemaname = 'public' "
+            "AND tablename = 'synthetic_case_owners'"
+        ).fetchone() == ("synthetic_case_owners",)
+        assert reopened.execute(
+            "SELECT count(*) FROM public.synthetic_case_owners"
+        ).fetchone() == (0,)
+        assert reopened.execute(
             "SELECT version_num FROM alembic_version"
-        ).fetchone() == (CORE_REVISION,)
+        ).fetchone() == (expected_head,)
         assert reopened.execute(
             "SELECT extname FROM pg_extension WHERE extname = 'vector'"
         ).fetchone() == ("vector",)
