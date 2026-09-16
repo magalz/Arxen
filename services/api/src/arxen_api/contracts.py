@@ -65,3 +65,13 @@ class Task(StoredRecord):
     case_id: UUID
     objective: str
     state: TaskState
+
+
+@dataclass(frozen=True, kw_only=True)
+class Event(StoredRecord):
+    case_id: UUID
+    sequence: int
+    event_type: str
+    actor: str
+    task_id: UUID | None
+    payload: dict[str, object]

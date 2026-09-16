@@ -9,7 +9,7 @@ from uuid import UUID
 import psycopg
 from psycopg.rows import class_row
 
-from arxen_api.contracts import Case, Message, MessageRole, Source, Task
+from arxen_api.contracts import Case, Event, Message, MessageRole, Source, Task
 
 
 class CoreRepository:
@@ -84,7 +84,35 @@ class CoreRepository:
             return cursor.fetchone()
 
     def create_task(self, case_id: UUID, objective: str) -> Task:
-        raise NotImplementedError("Task persistence is not implemented")
+        with self.connection.cursor(row_factory=class_row(Task)) as cursor:
+            cursor.execute(
+                "INSERT INTO tasks (case_id, objective) VALUES (%s, %s) "
+                "RETURNING id, case_id, objective, state, created_at",
+                (case_id, objective),
+            )
+            task = cursor.fetchone()
+            assert task is not None
+            return task
 
     def get_task(self, case_id: UUID, task_id: UUID) -> Task | None:
-        raise NotImplementedError("Task reading is not implemented")
+        with self.connection.cursor(row_factory=class_row(Task)) as cursor:
+            cursor.execute(
+                "SELECT id, case_id, objective, state, created_at "
+                "FROM tasks WHERE case_id = %s AND id = %s",
+                (case_id, task_id),
+            )
+            return cursor.fetchone()
+
+    def append_event(
+        self,
+        case_id: UUID,
+        event_type: str,
+        actor: str,
+        *,
+        task_id: UUID | None = None,
+        payload: dict[str, object] | None = None,
+    ) -> Event:
+        raise NotImplementedError("Event persistence is not implemented")
+
+    def list_events(self, case_id: UUID, *, after_sequence: int = 0) -> list[Event]:
+        raise NotImplementedError("Event reading is not implemented")

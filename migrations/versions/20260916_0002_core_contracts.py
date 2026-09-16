@@ -132,9 +132,26 @@ def upgrade() -> None:
         "CREATE TRIGGER sources_preserve_history BEFORE UPDATE OR DELETE ON sources "
         "FOR EACH ROW EXECUTE FUNCTION prevent_history_mutation()"
     )
+    op.execute(
+        """
+        CREATE TABLE tasks (
+            id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+            case_id uuid NOT NULL REFERENCES cases(id),
+            objective text NOT NULL CHECK (btrim(objective) <> ''),
+            state text NOT NULL DEFAULT 'draft' CHECK (state IN (
+                'draft', 'queued', 'running', 'waiting_user', 'waiting_budget',
+                'pause_requested', 'paused', 'recovering', 'completed',
+                'failed', 'cancelled'
+            )),
+            created_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            UNIQUE (case_id, id)
+        )
+        """
+    )
 
 
 def downgrade() -> None:
+    op.execute("DROP TABLE tasks")
     op.execute("DROP TABLE sources")
     op.execute("DROP FUNCTION validate_message_source()")
     op.execute("DROP TABLE messages")
