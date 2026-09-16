@@ -11,15 +11,24 @@ permitir o fluxo do dono solo. Não exige autoaprovação, revisão de CODEOWNER
 aprovação do último push por uma segunda pessoa.
 
 O contexto requerido tem o nome exato `CI Gate`, definido no workflow `CI`. O JSON
-exige esse contexto por nome; não contém um `integration_id` inventado. Quando
-aplicar a regra, é possível vinculá-lo à integração GitHub Actions após confirmar
-o ID da aplicação nos check runs reais do repositório. Esse vínculo adicional
-precisa ser refletido no JSON se adotado.
+vincula esse contexto ao GitHub Actions com `integration_id: 15368`, confirmado
+nos check runs reais do commit `250d0760fbab0dbae199f0b5de6cfde1bfe41de7` em
+16/09/2026. Assim, a regra preparada exige tanto o nome quanto a origem do check.
+
+**Estado confirmado em 16/09/2026:** configuração pronta, proteção ainda não
+ativada. A tentativa de criação pela ferramenta de terminal foi bloqueada antes
+de retornar uma resposta do GitHub, com a mensagem de que não foi possível
+determinar o status de segurança da solicitação. A consulta posterior a
+`GET /repos/magalz/Arxen/rulesets` retornou `[]`. Isso não demonstra falta de
+permissão da conta ou limitação do plano; a ativação administrativa segue pendente.
 
 Antes da ativação, publique o workflow e confira uma execução completa na branch
 de preparação. Em um repositório vazio, a criação inicial de `main` precisa estar
 resolvida antes de exigir o check nela. O arquivo usa `enforcement: active`, mas
 essa propriedade só tem efeito após importação/aplicação aceita pelo servidor.
+Os resultados e a correção identificada na execução inicial estão na
+[validação do CI](../../docs/validation-ci.md). Confira também os checks e as
+evidências do último commit da PR antes da ativação.
 
 Para um administrador, a
 [API oficial de rulesets](https://docs.github.com/en/rest/repos/rules#create-a-repository-ruleset)

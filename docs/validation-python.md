@@ -107,9 +107,11 @@ usada configurando `TEST_DATABASE_URL` com sua conexão de teste.
 erros de preparação, sem skips, produzindo o JUnit da integração. A mensagem
 foi `TEST_DATABASE_URL is required for integration tests.` seguida da
 orientação para configurar um banco descartável. Isso comprova o bloqueio
-por configuração ausente; as assertions contra PostgreSQL/pgvector ainda
-precisam ser executadas contra um banco ativo. Essa falha de infraestrutura
-não foi tratada como evidência de TDD do comportamento da API.
+por configuração ausente; as assertions contra PostgreSQL/pgvector não
+executaram nessa tentativa local. Essa falha de infraestrutura não foi tratada
+como evidência de TDD do comportamento da API.
 
-O check completo do monorepositório, o teste de navegador e a execução da
-integração no CI ficam na validação consolidada pelo agente principal.
+Na execução posterior da PR no GitHub Actions, os seis testes de integração
+passaram contra PostgreSQL/pgvector reais. O check completo e o smoke de
+navegador também passaram. Consulte a [validação consolidada](validation-ci.md)
+para os identificadores da execução e o limite da validação local.

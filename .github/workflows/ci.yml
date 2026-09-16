@@ -4,7 +4,7 @@ on:
   pull_request:
     branches: [main]
   push:
-    branches: [main, chore/ci-tdd]
+    branches: [main]
   workflow_dispatch:
   merge_group:
     types: [checks_requested]
@@ -85,6 +85,15 @@ jobs:
 
       - name: Build web
         run: pnpm build
+
+      - name: Require test evidence and build output
+        shell: bash
+        run: |
+          test -s test-results/web/junit.xml
+          test -s test-results/api/junit.xml
+          test -s coverage/web/lcov.info
+          test -s coverage/api/coverage.xml
+          test -s apps/web/dist/index.html
 
       - name: Upload unit coverage and results
         if: ${{ always() }}

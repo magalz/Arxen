@@ -48,3 +48,6 @@ Leia [CONTRIBUTING.md](CONTRIBUTING.md), [AGENTS.md](AGENTS.md) e
 resultados reais de Red/Green/Refactor ou da validação declarativa pertinente.
 Use exclusivamente fixtures sintéticas. Dados de casos, documentos privados,
 segredos e saídas de execução não pertencem ao repositório.
+
+A [validação inicial](docs/validation-ci.md) registra os resultados locais e do
+GitHub Actions, incluindo a pendência de ativação da proteção de `main`.

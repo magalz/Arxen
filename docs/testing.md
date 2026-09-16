@@ -107,7 +107,7 @@ justificativa, `passWithNoTests` ou opções equivalentes para produzir aprovaç
 ## Contrato do CI
 
 O workflow `.github/workflows/ci.yml`, nome **CI**, executa em PRs para `main`,
-pushes em `main` e `chore/ci-tdd`, disparo manual e `merge_group: checks_requested`.
+pushes em `main`, disparo manual e `merge_group: checks_requested`.
 Não há filtros por caminho. Os checks são:
 
 | Check                                 | Execução                                                                |
@@ -122,6 +122,11 @@ Não há filtros por caminho. Os checks são:
 retornarem exatamente `success`. Falha, cancelamento ou skip não satisfazem essa
 condição. Não remover dependências do gate para acomodar falhas. A matriz usa
 `fail-fast: false`, permitindo observar o resultado das duas plataformas.
+
+Antes do upload, cada job de qualidade exige arquivos não vazios de JUnit web/API,
+LCOV web, cobertura XML da API e HTML do build. Um comando que termine sem erro,
+mas não gere suas evidências, deve reprovar o job. O setup também confere que
+`pnpm --version` retorna a versão fixada.
 
 O token do workflow tem somente `contents: read`; o checkout não persiste suas
 credenciais. Novos commits cancelam a execução anterior do mesmo PR. Cada job tem
@@ -154,16 +159,18 @@ commit indicado por `^{}`, não o objeto da tag.
 | --------------------------------------------------------------------- | ------------- | ------------------------------------------ |
 | [actions/checkout](https://github.com/actions/checkout)               | v6.1.0        | `d23441a48e516b6c34aea4fa41551a30e30af803` |
 | [actions/setup-node](https://github.com/actions/setup-node)           | v6.5.0        | `249970729cb0ef3589644e2896645e5dc5ba9c38` |
-| [pnpm/action-setup](https://github.com/pnpm/action-setup)             | v6.1.0        | `ea17c68df8912ef543352723c149a84f56e3d413` |
+| [pnpm/setup](https://github.com/pnpm/setup)                           | v2.0.1        | `4700d737c3d7a2e7199f3d42a920f0bf7f34e411` |
 | [astral-sh/setup-uv](https://github.com/astral-sh/setup-uv)           | v8.3.2        | `11f9893b081a58869d3b5fccaea48c9e9e46f990` |
 | [actions/upload-artifact](https://github.com/actions/upload-artifact) | v7.0.1        | `043fb46d1a93c77aae656e7c1c64a875d1fc6a0a` |
 
-O setup de Node precede o pnpm; a Action oficial de pnpm declara suporte a v12.
+O setup de Node precede o pnpm. A Action oficial `pnpm/setup` v2 instala o
+executável nativo de pnpm v11 ou superior; `install: false` mantém a instalação
+congelada das dependências no passo explícito do workflow.
 uv e Python são preparados antes de `pnpm python:sync`. Atualize pins em PR e
 execute novamente os checks. Um exemplo de reconferência de tag anotada:
 
 ```text
-git ls-remote --tags https://github.com/pnpm/action-setup.git refs/tags/v6.1.0 refs/tags/v6.1.0^{}
+git ls-remote --tags https://github.com/pnpm/setup.git refs/tags/v2.0.1 refs/tags/v2.0.1^{}
 ```
 
 `.github/dependabot.yml` habilita atualizações semanais de GitHub Actions, sem
