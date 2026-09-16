@@ -3,8 +3,8 @@
 import os
 import subprocess
 import sys
-from collections.abc import Iterator
-from contextlib import contextmanager
+from collections.abc import Callable, Iterator
+from contextlib import AbstractContextManager, contextmanager
 from pathlib import Path
 from urllib.parse import urlsplit, urlunsplit
 from uuid import uuid4
@@ -55,6 +55,11 @@ def temporary_database(base_url: str) -> Iterator[str]:
             yield isolated_url
         finally:
             admin.execute(sql.SQL("DROP DATABASE {}").format(sql.Identifier(name)))
+
+
+@pytest.fixture
+def temporary_database_factory() -> Callable[[str], AbstractContextManager[str]]:
+    return temporary_database
 
 
 @pytest.fixture
