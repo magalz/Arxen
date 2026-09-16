@@ -16,6 +16,10 @@ implementação mínima e refatoração com os testes passando.
 
 ## Preparação
 
+A E00.3 está em andamento. O primeiro slice oferece identidade sintética opt-in
+e `GET /api/v1/me`, restritos a desenvolvimento/teste. O fluxo HTTP de casos ainda
+está pendente; consulte [estado e execução da E00.3](docs/e00-3-synthetic-cases.md).
+
 Use Node.js **26.8.1**, pnpm **12.3.4**, uv **0.12.10** e Python **3.13.12**.
 Na raiz do repositório:
 

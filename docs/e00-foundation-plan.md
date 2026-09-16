@@ -36,17 +36,21 @@ upload retomável, OpenHands, OCR final ou provedores reais apenas para encerrar
 Cada subetapa pode gerar mais de uma PR se o comportamento observável justificar a
 separação. Não agrupar mudanças apenas para reduzir número de PRs.
 
-## Objetivo atual: E00.2 — contratos centrais
+## Objetivo atual: E00.3 — identidade sintética e casos
 
-A E00.1 foi concluída e integrada pela PR #4, em `ff542c0`. A branch atual é
-`feat/e00-2-core-contracts`. A E00.2 contém os cinco contratos persistentes mínimos,
-uma nova migração Alembic e testes reais de integridade, sem iniciar a E00.3.
+A E00.1 foi integrada pela PR #4 em `ff542c0`; a E00.2 foi aceita e integrada
+pela PR #5 em `6192465`, com review independente e CI aprovados. Seus contratos
+e evidências permanecem em [e00-2-contracts.md](e00-2-contracts.md) e
+[validation-e00-2.md](validation-e00-2.md).
 
-O recorte de requisitos, decisões e slices está em
-[e00-2-contracts.md](e00-2-contracts.md); os resultados observados estão em
-[validation-e00-2.md](validation-e00-2.md). A etapa exige `pnpm check`, integração
-com banco vazio, guard íntegro, fresh-context review do diff final e CI Gate verde.
-O merge permanece uma decisão explícita do responsável pelo projeto.
+A branch atual é `feat/e00-3-synthetic-cases`. O recorte, o estado parcial e os
+próximos slices estão em [e00-3-synthetic-cases.md](e00-3-synthetic-cases.md).
+Somente a configuração e o endpoint de identidade sintética foram implementados;
+o fluxo persistente de casos ainda não foi demonstrado. A E00.4 não começou.
+
+A conclusão exige `pnpm check`, integração real, guard íntegro, fresh-context
+review do diff final e CI Gate verde. O merge de cada nova PR permanece uma
+decisão explícita do responsável pelo projeto.
 
 ## Registro do escopo da E00.1
 
