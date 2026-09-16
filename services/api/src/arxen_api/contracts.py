@@ -33,3 +33,13 @@ class Message(StoredRecord):
     sequence: int
     role: MessageRole
     content: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class Source(StoredRecord):
+    case_id: UUID
+    kind: Literal["message"]
+    message_id: UUID
+    start_offset: int
+    end_offset: int
+    excerpt: str

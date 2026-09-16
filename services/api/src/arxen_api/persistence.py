@@ -9,7 +9,7 @@ from uuid import UUID
 import psycopg
 from psycopg.rows import class_row
 
-from arxen_api.contracts import Case, Message, MessageRole
+from arxen_api.contracts import Case, Message, MessageRole, Source
 
 
 class CoreRepository:
@@ -34,7 +34,34 @@ class CoreRepository:
             return cursor.fetchone()
 
     def add_message(self, case_id: UUID, role: MessageRole, content: str) -> Message:
-        raise NotImplementedError("Message persistence is not implemented")
+        with self.connection.cursor(row_factory=class_row(Message)) as cursor:
+            cursor.execute(
+                "INSERT INTO messages (case_id, role, content) VALUES (%s, %s, %s) "
+                "RETURNING id, case_id, sequence, role, content, created_at",
+                (case_id, role, content),
+            )
+            message = cursor.fetchone()
+            assert message is not None
+            return message
 
     def list_messages(self, case_id: UUID) -> list[Message]:
-        raise NotImplementedError("Message reading is not implemented")
+        with self.connection.cursor(row_factory=class_row(Message)) as cursor:
+            cursor.execute(
+                "SELECT id, case_id, sequence, role, content, created_at "
+                "FROM messages WHERE case_id = %s ORDER BY sequence",
+                (case_id,),
+            )
+            return cursor.fetchall()
+
+    def create_message_source(
+        self,
+        case_id: UUID,
+        message_id: UUID,
+        start_offset: int,
+        end_offset: int,
+        excerpt: str,
+    ) -> Source:
+        raise NotImplementedError("Source persistence is not implemented")
+
+    def get_source(self, case_id: UUID, source_id: UUID) -> Source | None:
+        raise NotImplementedError("Source reading is not implemented")
