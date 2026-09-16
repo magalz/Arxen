@@ -36,10 +36,22 @@ upload retomável, OpenHands, OCR final ou provedores reais apenas para encerrar
 Cada subetapa pode gerar mais de uma PR se o comportamento observável justificar a
 separação. Não agrupar mudanças apenas para reduzir número de PRs.
 
-## Objetivo atual: concluir E00.1
+## Objetivo atual: E00.2 — contratos centrais
 
-A branch de trabalho inicial é `feat/e00-foundation`. O objetivo atual é encerrar
-**E00.1 — Banco, migrações e configuração** antes de iniciar E00.2.
+A E00.1 foi concluída e integrada pela PR #4, em `ff542c0`. A branch atual é
+`feat/e00-2-core-contracts`. A E00.2 contém os cinco contratos persistentes mínimos,
+uma nova migração Alembic e testes reais de integridade, sem iniciar a E00.3.
+
+O recorte de requisitos, decisões e slices está em
+[e00-2-contracts.md](e00-2-contracts.md); os resultados observados estão em
+[validation-e00-2.md](validation-e00-2.md). A etapa exige `pnpm check`, integração
+com banco vazio, guard íntegro, fresh-context review do diff final e CI Gate verde.
+O merge permanece uma decisão explícita do responsável pelo projeto.
+
+## Registro do escopo da E00.1
+
+A branch de trabalho inicial foi `feat/e00-foundation`. Os critérios abaixo
+registram a entrega que estabeleceu banco, migrações e configuração.
 
 ### Escopo obrigatório
 

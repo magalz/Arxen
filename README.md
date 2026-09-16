@@ -4,9 +4,12 @@ Assistente jurídico para advogados no Brasil.
 
 Este repositório contém a infraestrutura inicial de desenvolvimento: web mínima
 em React/TypeScript, API FastAPI, testes de unidade, integração PostgreSQL/pgvector
-e smoke de navegador. A E00.1 adiciona configuração tipada e migrações Alembic;
-as demais subetapas da fundação funcional e as funcionalidades jurídicas seguem
-como próximas entregas.
+e smoke de navegador. A E00.1 adiciona configuração tipada e migrações Alembic.
+A E00.2 estabelece contratos internos persistentes de caso, mensagem, fonte,
+tarefa e evento, com integridade demonstrada em PostgreSQL real. Identidade,
+rotas de domínio e o percurso web funcional permanecem nas próximas subetapas.
+Consulte [contratos e limites](docs/e00-2-contracts.md) e
+[evidências da E00.2](docs/validation-e00-2.md).
 
 Todo comportamento será desenvolvido com TDD: teste significativo, falha esperada,
 implementação mínima e refatoração com os testes passando.
@@ -37,6 +40,9 @@ e exige que estejam livres.
 e build. `pnpm test:web:watch` mantém o ciclo de feedback da web aberto.
 `pnpm test:integration` exige um banco de teste PostgreSQL com pgvector e
 `TEST_DATABASE_URL`; consulte [infra/README.md](infra/README.md) para o Compose local.
+Os testes de migração criam bancos temporários e requerem permissão `CREATEDB`.
+A persistência SQL tem um gate de cobertura próprio de 85% na integração;
+os demais módulos da API mantêm o gate de 85% nas unidades.
 
 O CI de PRs executa qualidade e unidades em Linux/Windows, integração real e
 Playwright/Chromium. O check **CI Gate** só aprova quando todos esses jobs passam.

@@ -24,21 +24,11 @@ def run_alembic(database_url: str, *arguments: str) -> subprocess.CompletedProce
     )
 
 
-def reset_migration_state(database_url: str) -> None:
-    with psycopg.connect(
-        database_url, autocommit=True, connect_timeout=5
-    ) as connection:
-        connection.execute("DROP TABLE IF EXISTS alembic_version")
-        connection.execute("DROP EXTENSION IF EXISTS vector CASCADE")
-
-
-def test_upgrade_head_prepares_empty_database(database_url: str) -> None:
-    reset_migration_state(database_url)
-
-    result = run_alembic(database_url, "upgrade", "head")
+def test_upgrade_initial_prepares_empty_database(empty_database_url: str) -> None:
+    result = run_alembic(empty_database_url, "upgrade", INITIAL_REVISION)
 
     assert result.returncode == 0, result.stderr
-    with psycopg.connect(database_url, connect_timeout=5) as connection:
+    with psycopg.connect(empty_database_url, connect_timeout=5) as connection:
         extension = connection.execute(
             "SELECT extversion FROM pg_extension WHERE extname = 'vector'"
         ).fetchone()

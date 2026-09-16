@@ -53,6 +53,8 @@ addopts = [
 [tool.coverage.run]
 branch = true
 source = ["arxen_api"]
+# SQL access is measured against real PostgreSQL by the integration coverage gate.
+omit = ["*/arxen_api/persistence.py"]
 data_file = ".coverage.api"
 
 [tool.coverage.report]

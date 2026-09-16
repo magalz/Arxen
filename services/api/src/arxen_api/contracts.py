@@ -1,0 +1,77 @@
+"""Internal persisted records; these types do not grant access to a case."""
+
+from dataclasses import dataclass
+from datetime import UTC, datetime
+from typing import Literal
+from uuid import UUID
+
+
+@dataclass(frozen=True, kw_only=True)
+class StoredRecord:
+    """Server-generated identity and operational timestamp."""
+
+    id: UUID
+    created_at: datetime
+
+    def __post_init__(self) -> None:
+        if self.created_at.utcoffset() is None:
+            raise ValueError("created_at must have a timezone")
+        object.__setattr__(self, "created_at", self.created_at.astimezone(UTC))
+
+
+@dataclass(frozen=True, kw_only=True)
+class Case(StoredRecord):
+    title: str
+
+
+type MessageRole = Literal["user", "assistant"]
+
+
+@dataclass(frozen=True, kw_only=True)
+class Message(StoredRecord):
+    case_id: UUID
+    sequence: int
+    role: MessageRole
+    content: str
+
+
+@dataclass(frozen=True, kw_only=True)
+class Source(StoredRecord):
+    case_id: UUID
+    kind: Literal["message"]
+    message_id: UUID
+    start_offset: int
+    end_offset: int
+    excerpt: str
+
+
+type TaskState = Literal[
+    "draft",
+    "queued",
+    "running",
+    "waiting_user",
+    "waiting_budget",
+    "pause_requested",
+    "paused",
+    "recovering",
+    "completed",
+    "failed",
+    "cancelled",
+]
+
+
+@dataclass(frozen=True, kw_only=True)
+class Task(StoredRecord):
+    case_id: UUID
+    objective: str
+    state: TaskState
+
+
+@dataclass(frozen=True, kw_only=True)
+class Event(StoredRecord):
+    case_id: UUID
+    sequence: int
+    event_type: str
+    actor: str
+    task_id: UUID | None
+    payload: dict[str, object]

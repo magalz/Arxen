@@ -146,12 +146,21 @@ jobs:
       - name: Test with real PostgreSQL and pgvector
         run: pnpm test:integration
 
+      - name: Require integration evidence
+        shell: bash
+        run: |
+          test -s test-results/integration/junit.xml
+          test -s coverage/integration/coverage.xml
+          test -s coverage/integration/html/index.html
+
       - name: Upload integration results
         if: ${{ always() }}
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: integration-results
-          path: test-results/integration/
+          path: |
+            test-results/integration/
+            coverage/integration/
           retention-days: 5
           if-no-files-found: warn
 
