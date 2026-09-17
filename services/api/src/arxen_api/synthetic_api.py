@@ -17,6 +17,12 @@ from arxen_api.settings import DatabaseSettings
 from arxen_api.synthetic_identity import SyntheticIdentity
 
 
+class SyntheticError(BaseModel):
+    """The redacted error body returned by the synthetic HTTP adapter."""
+
+    detail: str
+
+
 class CaseInput(BaseModel):
     """Only a provisional title is accepted at this stage."""
 
@@ -38,7 +44,13 @@ class CaseInput(BaseModel):
 def create_synthetic_router(
     identity: SyntheticIdentity, database: DatabaseSettings
 ) -> APIRouter:
-    router = APIRouter(prefix="/api/v1", tags=["synthetic development"])
+    router = APIRouter(
+        prefix="/api/v1",
+        tags=["synthetic development"],
+        responses={
+            401: {"model": SyntheticError, "description": "Authentication required"}
+        },
+    )
     bearer = HTTPBearer(auto_error=False, scheme_name="SyntheticBearer")
     database_url = database.database_url.replace(
         "postgresql+psycopg://", "postgresql://", 1
@@ -77,7 +89,14 @@ def create_synthetic_router(
         response.headers["Cache-Control"] = "no-store"
         return {"id": user_id, "synthetic": True}
 
-    @router.post("/cases", status_code=201)
+    @router.post(
+        "/cases",
+        status_code=201,
+        responses={
+            422: {"model": SyntheticError, "description": "Invalid request"},
+            503: {"model": SyntheticError, "description": "Case storage unavailable"},
+        },
+    )
     def create_case(
         body: CaseInput,
         response: Response,
@@ -89,7 +108,14 @@ def create_synthetic_router(
         response.headers["Location"] = f"/api/v1/cases/{case.id}"
         return case
 
-    @router.get("/cases/{case_id}")
+    @router.get(
+        "/cases/{case_id}",
+        responses={
+            404: {"model": SyntheticError, "description": "Case not found"},
+            422: {"model": SyntheticError, "description": "Invalid request"},
+            503: {"model": SyntheticError, "description": "Case storage unavailable"},
+        },
+    )
     def get_case(
         case_id: UUID,
         response: Response,

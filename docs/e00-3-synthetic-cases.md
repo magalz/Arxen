@@ -100,6 +100,8 @@ Corpo inválido ou UUID de caminho malformado recebe 422 `Invalid request`, sem
 reproduzir valores enviados pelo cliente. Falhas de PostgreSQL retornam 503
 `Case storage unavailable`, sem incluir SQL, credenciais ou diagnóstico do driver.
 Essas respostas e as respostas de sucesso usam `Cache-Control: no-store`.
+O OpenAPI declara os erros pertinentes a cada rota com `detail` textual, incluindo
+o 422 genérico, para manter o contrato publicado coerente com as respostas HTTP.
 
 São requisitos desta etapa a atomicidade, releitura entre aplicações, escopo de
 responsável e upgrade que preserve dados antigos. Revisões para edição, fase,
@@ -116,7 +118,7 @@ específica de `0003` usa upgrade explícito dessa revisão, incluindo dados ant
 downgrade e re-upgrade em banco descartável. Os dois testes observaram novo Red
 de ausência do esquema antes do snapshot autorizado e do DDL correspondente.
 
-O guard final é cumulativo e contém quinze arquivos. A justificativa, os pareceres,
+O guard final é cumulativo e contém dezesseis arquivos. A justificativa, os pareceres,
 as duas exceções revisadas e os hashes estão no registro de validação. Nenhum teste
 foi enfraquecido ou retirado da suíte para acomodar a implementação.
 

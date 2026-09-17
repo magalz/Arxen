@@ -207,7 +207,8 @@ f91c46d1ce5ad5bc401be46849d31f2967852a8c9f23d0f56b6e8c77bd7db7a0  tests/integrat
 
 ## Verificação consolidada da entrega
 
-Resultados locais do código completo, em Windows com PostgreSQL/pgvector real:
+Resultados locais do fluxo completo em `4aa1a6a`, antes da correção OpenAPI,
+em Windows com PostgreSQL/pgvector real:
 
 | Verificação                      | Resultado observado                                      |
 | -------------------------------- | -------------------------------------------------------- |
@@ -264,3 +265,26 @@ d770ed83edc2947bf6375ab36121f59582b127eca290a8e7c8dda709dc82e5e7  services/api/t
 O parecer e o CI de `4aa1a6a` não substituem review em contexto novo e CI do SHA
 que corrigir esse contrato. O review também apontou texto desatualizado no README,
 que ainda descrevia as rotas de casos como pendentes.
+
+O `worker-3` confirmou o desvio OpenAPI como MEDIUM bloqueante e o README como LOW
+no diff `6192465..4aa1a6a`. A correção declara o modelo `SyntheticError` com
+`detail: str` e as respostas pertinentes por rota, preservando os corpos HTTP e
+a sanitização existentes. O README foi atualizado. O checkpoint Red está em
+`3fa2e4a`; o mesmo teste congelado terminou com **8 passed**, exit 0.
+
+O parecer formal desse SHA foi **REJECT**, com BLOCKER 0, HIGH 0, MEDIUM 1 e LOW 1.
+O revisor recalculou os quinze hashes e comparou os blobs de `05eca83` ao código
+revisado, confirmando integridade do Green. Não encontrou outro bloqueador em
+SQL, autorização, transações, migrações, guard ou cobertura. O parecer anterior
+e suas duas correções ficam registrados na PR; o SHA corrigido recebe novo review.
+
+A nova execução de `pnpm check` terminou com exit 0: **86 testes da API**,
+cobertura agregada de **89,52%**, web **1 passed/100%**, lint, formato, tipos,
+build e **16 arquivos do guard intactos**. A cobertura unitária do adaptador
+sintético ficou em 73,91%; o código permanece integralmente no gate agregado.
+
+`pnpm test:integration` foi repetido após a correção e terminou com **105 passed**,
+exit 0 e **100% de cobertura da persistência**, com os mesmos dois avisos de
+depreciação. Nenhum teste congelado foi editado. Os dois achados do SHA anterior
+estão corrigidos; aprovação independente e CI da versão corrigida são registrados
+separadamente na PR antes de torná-la pronta para revisão do responsável.
