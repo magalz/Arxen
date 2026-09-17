@@ -82,6 +82,16 @@ class CoreRepository:
             )
             return cursor.fetchall()
 
+    def submit_owned_message(
+        self, owner_user_id: UUID, case_id: UUID, client_message_id: UUID, content: str
+    ) -> tuple[Message, bool] | None:
+        raise NotImplementedError("Durable message submission is not implemented")
+
+    def list_owned_messages(
+        self, owner_user_id: UUID, case_id: UUID, *, after_sequence: int, limit: int
+    ) -> list[Message] | None:
+        raise NotImplementedError("Authorized message history is not implemented")
+
     def create_message_source(
         self,
         case_id: UUID,
