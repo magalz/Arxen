@@ -53,6 +53,8 @@ os demais módulos da API mantêm o gate de 85% nas unidades.
 
 O CI de PRs executa qualidade e unidades em Linux/Windows, integração real e
 Playwright/Chromium. O check **CI Gate** só aprova quando todos esses jobs passam.
+O [SonarCloud](docs/sonarcloud.md) importa a cobertura gerada pelo mesmo workflow
+e acrescenta seu Quality Gate nos eventos com credencial de análise disponível.
 A definição da proteção de `main` está em
 [.github/rulesets](.github/rulesets/README.md); sua aplicação no GitHub é uma
 configuração separada do arquivo versionado.
