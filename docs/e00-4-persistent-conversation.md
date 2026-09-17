@@ -84,6 +84,25 @@ excluir código para melhorar percentuais. Não se presume que o CI herdado pass
 
 ## Estado
 
-Planejamento registrado antes da implementação. Evidências de Red, snapshots,
-Green, validação e revisão serão registradas em `validation-e00-4.md` e na PR.
-Esta descrição de contrato não constitui evidência de entrega concluída.
+Planejamento registrado antes da implementação. Os Greens focados demonstraram
+68 testes HTTP e 28 de integração de migração/persistência/conversa. Evidências,
+limitações, review e CI são registrados em `validation-e00-4.md` e na PR.
+A conclusão depende do review independente e dos checks do SHA final.
+
+## Operação sintética
+
+Use a configuração de identidade da E00.3 e aplique `pnpm db:migrate` ao banco
+sintético antes de iniciar `pnpm dev:api`. Com o token Bearer da identidade dona
+do caso, envie `{"client_message_id":"<UUID-não-nulo>","content":"Mensagem sintética"}`
+para a rota POST. Preserve a chave até conhecer o resultado: caso a conexão caia,
+reenvie exatamente a mesma chave e texto. Uma mensagem nova precisa de outra chave.
+
+Consulte a rota GET com `limit` e, nas páginas seguintes, o `next_after_sequence`
+retornado. Ao recarregar a interface futura, consultar o mesmo caso recupera o
+histórico persistido. O limite atual é de 100 mensagens por página, não por caso.
+
+A migração `0004` não altera mensagens antigas. Seu downgrade remove os vínculos
+de idempotência/autoria sintética, conservando as mensagens e os demais contratos;
+por isso serve apenas aos bancos descartáveis dos testes, não como recuperação
+de produção. Transferência de responsabilidade e retenção/exclusão do histórico
+exigirão decisões e migrações próprias nas etapas correspondentes.

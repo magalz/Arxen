@@ -58,3 +58,72 @@ A repetição terminou novamente com **16 failed**, pelas mesmas causas de catá
 e stubs, com Ruff aprovado. Os hashes dos outros dezenove arquivos foram conferidos
 antes da renovação. O snapshot cumulativo passou a **21 arquivos**, acrescentando
 a integração HTTP, e foi verificado antes da implementação.
+
+## Green observado
+
+Checkpoint Red `8859f82`: testes, stubs e migração sem DDL. Os blobs desse commit
+foram conferidos antes de relatar a cronologia. Nenhum teste foi editado no Green.
+
+| Seleção focada                           | Resultado            |
+| ---------------------------------------- | -------------------- |
+| HTTP/roteador de conversa                | 68 passed            |
+| Migração, persistência e integração HTTP | 28 passed            |
+| Guard após implementação                 | 21 arquivos intactos |
+
+Foram demonstrados os dois formatos de URL PostgreSQL, duas identidades, reabertura
+com token rotacionado, conflito/replay, paginação incluindo mensagens internas,
+concorrência entre conexões e entre aplicações. Um observador ASGI confere os
+registros por outra conexão antes dos headers. Triggers reais provocam falhas na
+inserção e no commit; mensagem, contador e chave são revertidos, e a mesma chave
+pode ser reenviada após remover a falha. As fixtures de isolamento não mudaram.
+
+## Coleta de cobertura
+
+O Memtrace também recebeu a lista dos quatro arquivos de configuração afetados;
+não mapeou símbolos nesses arquivos e indicou relinking em andamento. As fontes
+e consumidores dos scripts foram conferidos diretamente. A configuração acrescenta
+scripts/migrações e o suporte a subprocessos já presente no coverage.py instalado.
+As duas medições originais continuam com verificações explícitas de 85%, além dos
+gates dos relatórios ampliados. Essa alteração é declarativa, sem alegação de TDD
+retroativo para os scripts e migrações existentes.
+
+## Verifica??o consolidada
+
+O Green da implementa??o est? em `836d0f0`. O `pnpm check` final terminou com
+exit 0: guard, lint, formato, tipos, unidades e build. A su?te da API aprovou
+154 testes: cobertura de 91,47% na API e 89,57% incluindo scripts. A web aprovou
+um teste com 100%. A integra??o aprovou 133 testes, com 100% na persist?ncia e
+96,81% incluindo migra??es. Os gates originais de 85% foram conferidos separadamente.
+
+A coleta ampliada mediu o guard (85,27%), migra??es `0002` a `0004` (100%),
+migra??o inicial (90%) e ambiente Alembic (77,27%). Oito classes no XML unit?rio,
+seis na integra??o e uma fonte no LCOV tiveram caminhos relativos resolvidos.
+Nenhum percentual foi inferido a partir de testes aprovados.
+
+Uma execu??o anterior de `pnpm check` perdeu a continua??o do terminal antes de
+entregar resultado final; ela n?o foi declarada aprovada. A confer?ncia final,
+ap?s a atualiza??o documental e da coleta, concluiu com exit 0 e registro local.
+Os dois avisos de deprecia??o do TestClient continuam vis?veis. O percurso web n?o
+mudou; E2E local n?o foi repetido, e Chromium permanece obrigat?rio no CI.
+Nenhuma depend?ncia, lockfile ou fixture de isolamento foi alterada.
+
+A confer?ncia posterior do Memtrace encontrou o roteador de identidade com
+45 depend?ncias e risco HIGH, incluindo testes novos e herdados. `CoreRepository`
+retornou sete depend?ncias e risco MEDIUM. Os arquivos indicados foram exercitados
+nas su?tes completas. Contagens refletem o ?ndice naquele instante, sem provar
+inexist?ncia de outros consumidores. As consultas e seus resultados foram preservados
+localmente, fora do Git.
+
+Hashes SHA-256 dos cinco testes novos, preservados desde o snapshot anterior ao Green:
+
+```text
+6fb2769ba94841c3cebb573341e81aabb15241e3531d8e59901d1580afe7498f  services/api/tests/test_conversation_http.py
+1d8fd0189c0e4be5f56089e90438f8250b8488eaaca6240883cdf6996f1a9d30  services/api/tests/test_conversation_routes.py
+1cef4f813895878bd674e0e9a150b6ce2d98f3ebee49de66132f9adfd503c0dc  tests/integration/test_conversation_api.py
+e1f5a588a39abf42918fc39052d91d070cecfee5c24f29837868f3bffc165e23  tests/integration/test_message_submission_migration.py
+883bc207dc7e725f370dbbfce35a575adbd6f47f907b8a9fe20a99fa6c5e1177  tests/integration/test_message_submissions.py
+```
+
+O guard final cont?m 21 arquivos intactos. O review independente e o CI s?o
+vinculados ao SHA na PR. A revis?o formal de formata??o n?o substitui o parecer
+integral. Mudan?a material posterior exige nova revis?o. E00.5 e E01 n?o come?aram.
