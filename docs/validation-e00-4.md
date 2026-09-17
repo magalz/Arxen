@@ -87,31 +87,31 @@ As duas medições originais continuam com verificações explícitas de 85%, al
 gates dos relatórios ampliados. Essa alteração é declarativa, sem alegação de TDD
 retroativo para os scripts e migrações existentes.
 
-## Verifica??o consolidada
+## Verificação consolidada
 
-O Green da implementa??o est? em `836d0f0`. O `pnpm check` final terminou com
-exit 0: guard, lint, formato, tipos, unidades e build. A su?te da API aprovou
+O Green da implementação está em `836d0f0`. O `pnpm check` final terminou com
+exit 0: guard, lint, formato, tipos, unidades e build. A suíte da API aprovou
 154 testes: cobertura de 91,47% na API e 89,57% incluindo scripts. A web aprovou
-um teste com 100%. A integra??o aprovou 133 testes, com 100% na persist?ncia e
-96,81% incluindo migra??es. Os gates originais de 85% foram conferidos separadamente.
+um teste com 100%. A integração aprovou 133 testes, com 100% na persistência e
+96,81% incluindo migrações. Os gates originais de 85% foram conferidos separadamente.
 
-A coleta ampliada mediu o guard (85,27%), migra??es `0002` a `0004` (100%),
-migra??o inicial (90%) e ambiente Alembic (77,27%). Oito classes no XML unit?rio,
-seis na integra??o e uma fonte no LCOV tiveram caminhos relativos resolvidos.
+A coleta ampliada mediu o guard (85,27%), migrações `0002` a `0004` (100%),
+migração inicial (90%) e ambiente Alembic (77,27%). Oito classes no XML unitário,
+seis na integração e uma fonte no LCOV tiveram caminhos relativos resolvidos.
 Nenhum percentual foi inferido a partir de testes aprovados.
 
-Uma execu??o anterior de `pnpm check` perdeu a continua??o do terminal antes de
-entregar resultado final; ela n?o foi declarada aprovada. A confer?ncia final,
-ap?s a atualiza??o documental e da coleta, concluiu com exit 0 e registro local.
-Os dois avisos de deprecia??o do TestClient continuam vis?veis. O percurso web n?o
-mudou; E2E local n?o foi repetido, e Chromium permanece obrigat?rio no CI.
-Nenhuma depend?ncia, lockfile ou fixture de isolamento foi alterada.
+Uma execução anterior de `pnpm check` perdeu a continuação do terminal antes de
+entregar resultado final; ela não foi declarada aprovada. A conferência final,
+após a atualização documental e da coleta, concluiu com exit 0 e registro local.
+Os dois avisos de depreciação do TestClient continuam visíveis. O percurso web não
+mudou; E2E local não foi repetido pelo implementador, e Chromium permanece obrigatório
+no CI. Nenhuma dependência, lockfile ou fixture de isolamento foi alterada.
 
-A confer?ncia posterior do Memtrace encontrou o roteador de identidade com
-45 depend?ncias e risco HIGH, incluindo testes novos e herdados. `CoreRepository`
-retornou sete depend?ncias e risco MEDIUM. Os arquivos indicados foram exercitados
-nas su?tes completas. Contagens refletem o ?ndice naquele instante, sem provar
-inexist?ncia de outros consumidores. As consultas e seus resultados foram preservados
+A conferência posterior do Memtrace encontrou o roteador de identidade com
+45 dependências e risco HIGH, incluindo testes novos e herdados. `CoreRepository`
+retornou sete dependências e risco MEDIUM. Os arquivos indicados foram exercitados
+nas suítes completas. Contagens refletem o índice naquele instante, sem provar
+inexistência de outros consumidores. As consultas e seus resultados foram preservados
 localmente, fora do Git.
 
 Hashes SHA-256 dos cinco testes novos, preservados desde o snapshot anterior ao Green:
@@ -124,6 +124,33 @@ e1f5a588a39abf42918fc39052d91d070cecfee5c24f29837868f3bffc165e23  tests/integrat
 883bc207dc7e725f370dbbfce35a575adbd6f47f907b8a9fe20a99fa6c5e1177  tests/integration/test_message_submissions.py
 ```
 
-O guard final cont?m 21 arquivos intactos. O review independente e o CI s?o
-vinculados ao SHA na PR. A revis?o formal de formata??o n?o substitui o parecer
-integral. Mudan?a material posterior exige nova revis?o. E00.5 e E01 n?o come?aram.
+O guard final contém 21 arquivos intactos. O review independente e o CI são
+vinculados ao SHA na PR. A revisão formal de formatação não substitui o parecer
+integral. Mudança material posterior exige nova revisão. E00.5 e E01 não começaram.
+
+## Correção declarativa dos caminhos de cobertura
+
+No primeiro CI da PR #8, SHA `8cca7d1`, qualidade Linux/Windows, integração e
+Chromium passaram. O Sonar leu os XML, mas ignorou sete arquivos da API e a
+persistência: as raízes mistas do XML fizeram o parser procurar os caminhos completos
+sob `scripts` e `migrations`. A cobertura de código novo apareceu como 12,5%, e o
+gate reprovou corretamente. Esse CI não é apresentado como entrega aprovada.
+
+A configuração agora distingue `source_pkgs` de `source_dirs`. O coverage.py
+7.16.1 mantém as mesmas fontes medidas e gera nomes relativos completos a partir
+da raiz do repositório. Na prova com os dados já coletados, cada linha, branch e
+contador de execução permaneceu idêntico nos oito arquivos unitários e seis de
+integração. Não há edição dos XML após sua geração nem alteração de denominadores.
+As fontes e os dois gates anteriores de 85% permanecem iguais.
+
+O Memtrace recebeu novamente os dois arquivos de configuração antes desse ajuste.
+O ajuste foi isolado em worktree próprio para preservar o checkpoint em revisão
+e a atualização documental concorrente no workspace principal. A leitura local de
+arquivos confirmou o escopo; o índice de configuração não contém símbolos de código.
+Os resultados após a correção e o review do SHA final ficam registrados na PR.
+
+Após a correção declarativa, `pnpm check` e `pnpm test:integration` foram repetidos
+no worktree isolado e terminaram com exit 0. Permaneceram 154 testes de API, um
+web e 133 de integração, com os mesmos percentuais e 21 hashes intactos. A coleta
+nova confirmou raízes únicas e nomes completos relativos ao repositório; o código
+da aplicação e os testes não mudaram em relação a `8cca7d1`.

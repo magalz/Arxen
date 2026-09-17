@@ -126,3 +126,13 @@ Foram conferidas cinco classes no XML de unidades, uma no XML de persistência e
 uma fonte no LCOV. Os avisos de depreciação do TestClient continuam visíveis.
 O percurso web não mudou; Chromium permanece obrigatório no CI. Estes resultados
 não substituem a conferência da primeira análise autenticada no SonarCloud.
+
+## Caminhos com fontes de pacotes e diretórios
+
+A configuração distingue `source_pkgs` (API ou módulo de persistência) e
+`source_dirs` (scripts ou migrações). Isso conserva o conjunto medido, mas faz o
+XML manter os caminhos completos relativos ao repositório. Misturar nomes de
+pacote e diretórios em `source` gerava raízes diferentes: o scanner podia ignorar
+arquivos apesar de o coverage.py mostrar sua execução. A PR #8 demonstrou essa
+falha no primeiro CI e conferiu a equivalência de todos os contadores após o ajuste.
+Os relatórios são produzidos pelo coverage.py, sem reescrita de métricas no CI.
