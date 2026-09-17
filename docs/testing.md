@@ -177,18 +177,25 @@ O workflow `.github/workflows/ci.yml`, nome **CI**, executa em PRs para `main`,
 pushes em `main`, disparo manual e `merge_group: checks_requested`.
 Não há filtros por caminho. Os checks são:
 
-| Check                                 | Execução                                                                |
-| ------------------------------------- | ----------------------------------------------------------------------- |
-| `Quality & unit (ubuntu-24.04)`       | Qualidade, unidades com cobertura e build em Linux.                     |
-| `Quality & unit (windows-2025)`       | Mesmos scripts, a partir de Windows PowerShell.                         |
-| `Integration (PostgreSQL + pgvector)` | Linux, serviço PostgreSQL 17/pgvector 0.8.6 com healthcheck.            |
-| `E2E (Chromium)`                      | Linux, navegador real e subprocessos da API/web.                        |
-| `CI Gate`                             | Agrega os três jobs, incluindo as duas entradas da matriz de qualidade. |
+| Check                                 | Execução                                                              |
+| ------------------------------------- | --------------------------------------------------------------------- |
+| `Quality & unit (ubuntu-24.04)`       | Qualidade, unidades com cobertura e build em Linux.                   |
+| `Quality & unit (windows-2025)`       | Mesmos scripts, a partir de Windows PowerShell.                       |
+| `Integration (PostgreSQL + pgvector)` | Linux, serviço PostgreSQL 17/pgvector 0.8.6 com healthcheck.          |
+| `E2E (Chromium)`                      | Linux, navegador real e subprocessos da API/web.                      |
+| `SonarCloud`                          | Análise com relatórios de cobertura da mesma execução e Quality Gate. |
+| `CI Gate`                             | Agrega qualidade, integração, E2E e Sonar quando aplicável.           |
 
 `CI Gate` usa `always()` e só aprova se **quality**, **integration** e **e2e**
 retornarem exatamente `success`. Falha, cancelamento ou skip não satisfazem essa
 condição. Não remover dependências do gate para acomodar falhas. A matriz usa
 `fail-fast: false`, permitindo observar o resultado das duas plataformas.
+
+O job SonarCloud recebe os relatórios Linux de unidades e PostgreSQL de integração,
+com caminhos relativos. Em eventos com análise habilitada, seu Quality Gate também
+é obrigatório no `CI Gate`. Forks, Dependabot e `merge_group` têm dispensa explícita
+somente desse job; os três gates anteriores continuam exigindo `success`.
+Credencial, escopo, limitações e ativação estão em [sonarcloud.md](sonarcloud.md).
 
 Antes do upload, cada job de qualidade exige arquivos não vazios de JUnit web/API,
 LCOV web, cobertura XML da API e HTML do build. Um comando que termine sem erro,
