@@ -7,10 +7,12 @@ not credentials. Domain routes must establish authorization before using this AP
 from uuid import UUID
 
 import psycopg
+from psycopg.pq import TransactionStatus
 from psycopg.rows import class_row
 from psycopg.types.json import Jsonb
 
 from arxen_api.contracts import Case, Event, Message, MessageRole, Source, Task
+from arxen_api.conversation import MessageConflict
 
 
 class CoreRepository:
@@ -85,12 +87,61 @@ class CoreRepository:
     def submit_owned_message(
         self, owner_user_id: UUID, case_id: UUID, client_message_id: UUID, content: str
     ) -> tuple[Message, bool] | None:
-        raise NotImplementedError("Durable message submission is not implemented")
+        """Serialize a submission within the caller's transaction and identity."""
+        if (
+            self.connection.autocommit
+            and self.connection.info.transaction_status == TransactionStatus.IDLE
+        ):
+            raise ValueError("Message submission requires a caller-owned transaction")
+        authorized = self.connection.execute(
+            "SELECT c.id FROM cases c "
+            "JOIN synthetic_case_owners o ON o.case_id=c.id "
+            "WHERE c.id=%s AND o.owner_user_id=%s FOR UPDATE OF c, o",
+            (case_id, owner_user_id),
+        ).fetchone()
+        if authorized is None:
+            return None
+
+        # The case lock also orders the existing message-sequence trigger. A
+        # retried concurrent request observes the predecessor after its commit.
+        with self.connection.cursor(row_factory=class_row(Message)) as cursor:
+            cursor.execute(
+                "SELECT m.id, m.case_id, m.sequence, m.role, m.content, m.created_at "
+                "FROM messages m JOIN synthetic_message_submissions s "
+                "ON s.case_id=m.case_id AND s.message_id=m.id "
+                "WHERE s.case_id=%s AND s.owner_user_id=%s AND s.client_message_id=%s",
+                (case_id, owner_user_id, client_message_id),
+            )
+            previous = cursor.fetchone()
+        if previous is not None:
+            if previous.content != content:
+                raise MessageConflict("Message submission conflict")
+            return previous, False
+
+        message = self.add_message(case_id, "user", content)
+        self.connection.execute(
+            "INSERT INTO synthetic_message_submissions "
+            "(case_id, owner_user_id, client_message_id, message_id) "
+            "VALUES (%s,%s,%s,%s)",
+            (case_id, owner_user_id, client_message_id, message.id),
+        )
+        return message, True
 
     def list_owned_messages(
         self, owner_user_id: UUID, case_id: UUID, *, after_sequence: int, limit: int
     ) -> list[Message] | None:
-        raise NotImplementedError("Authorized message history is not implemented")
+        """Read a bounded page, retaining identity scope in the message query."""
+        if self.get_owned_case(owner_user_id, case_id) is None:
+            return None
+        with self.connection.cursor(row_factory=class_row(Message)) as cursor:
+            cursor.execute(
+                "SELECT m.id, m.case_id, m.sequence, m.role, m.content, m.created_at "
+                "FROM messages m JOIN synthetic_case_owners o ON o.case_id=m.case_id "
+                "WHERE m.case_id=%s AND o.owner_user_id=%s AND m.sequence>%s "
+                "ORDER BY m.sequence LIMIT %s",
+                (case_id, owner_user_id, after_sequence, limit),
+            )
+            return cursor.fetchall()
 
     def create_message_source(
         self,
