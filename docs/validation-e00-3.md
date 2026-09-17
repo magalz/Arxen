@@ -237,3 +237,30 @@ escopo, não o diff final. O parecer de encerramento deve ser emitido por um nov
 contexto read-only, identificando o SHA e achados por severidade. A PR #6 registra
 esse parecer e o CI do SHA final antes de ser liberada para revisão do responsável.
 Nenhum resultado histórico substitui esses gates; o merge exige autorização própria.
+
+## Correção do contrato de erros OpenAPI
+
+O CI de `4aa1a6a88d5c77af56ac43898eb32afad26f2efe` passou na execução
+`35165252595`, incluindo Linux/Windows, integração, Chromium e CI Gate. Um novo
+worker read-only iniciou a revisão desse SHA. A conferência adicional do contrato
+OpenAPI encontrou divergência entre a resposta genérica 422 e o esquema padrão
+do FastAPI (`detail` como array), além de erros HTTP não declarados.
+
+Foi acrescentado `test_synthetic_error_schema.py`, sem alterar os quinze testes
+congelados. O comando abaixo terminou em **8 failed**, exit 1: seis respostas
+ausentes do contrato e dois esquemas 422 com `array` em vez de `string`.
+
+```text
+pnpm python:run pytest services/api/tests/test_synthetic_error_schema.py --no-cov -q --tb=short
+```
+
+O guard foi verificado com quinze arquivos, ampliado explicitamente para dezesseis
+e verificado novamente antes da implementação. Hash do novo Red:
+
+```text
+d770ed83edc2947bf6375ab36121f59582b127eca290a8e7c8dda709dc82e5e7  services/api/tests/test_synthetic_error_schema.py
+```
+
+O parecer e o CI de `4aa1a6a` não substituem review em contexto novo e CI do SHA
+que corrigir esse contrato. O review também apontou texto desatualizado no README,
+que ainda descrevia as rotas de casos como pendentes.
