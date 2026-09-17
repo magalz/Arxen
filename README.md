@@ -6,8 +6,9 @@ Este repositório contém a infraestrutura inicial de desenvolvimento: web míni
 em React/TypeScript, API FastAPI, testes de unidade, integração PostgreSQL/pgvector
 e smoke de navegador. A E00.1 adiciona configuração tipada e migrações Alembic.
 A E00.2 estabelece contratos internos persistentes de caso, mensagem, fonte,
-tarefa e evento, com integridade demonstrada em PostgreSQL real. Identidade,
-rotas de domínio e o percurso web funcional permanecem nas próximas subetapas.
+tarefa e evento, com integridade demonstrada em PostgreSQL real. A E00.3 acrescenta
+identidade sintética e criação/consulta de casos com responsabilidade persistida.
+O percurso web funcional permanece nas próximas subetapas.
 Consulte [contratos e limites](docs/e00-2-contracts.md) e
 [evidências da E00.2](docs/validation-e00-2.md).
 
@@ -15,6 +16,12 @@ Todo comportamento será desenvolvido com TDD: teste significativo, falha espera
 implementação mínima e refatoração com os testes passando.
 
 ## Preparação
+
+A E00.3 oferece identidade sintética opt-in, `GET /api/v1/me`, `POST /api/v1/cases`
+e `GET /api/v1/cases/{case_id}`, restritos a desenvolvimento/teste. Criação atômica,
+reabertura e recusa de acesso cruzado foram demonstradas com PostgreSQL real;
+consulte [estado e execução da E00.3](docs/e00-3-synthetic-cases.md) e
+[evidências de validação](docs/validation-e00-3.md). E00.4 e E01 não foram iniciadas.
 
 Use Node.js **26.8.1**, pnpm **12.3.4**, uv **0.12.10** e Python **3.13.12**.
 Na raiz do repositório:

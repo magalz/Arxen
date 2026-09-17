@@ -1,10 +1,12 @@
 # Contribuir com o Arxen
 
 Leia [AGENTS.md](AGENTS.md) antes de alterar o repositório e
-[docs/testing.md](docs/testing.md) para o fluxo de testes. A E00.1 está integrada;
-a entrega atual é a E00.2, descrita no
+[docs/testing.md](docs/testing.md) para o fluxo de testes. A E00.2 está integrada;
+a entrega atual é a E00.3, descrita no
 [plano da fundação](docs/e00-foundation-plan.md) e nos
-[contratos centrais](docs/e00-2-contracts.md). E00.3 ainda não começou.
+[slices de identidade e casos](docs/e00-3-synthetic-cases.md). Identidade, criação,
+consulta e reabertura com responsabilidade persistida estão implementadas. Evidências
+locais, review e CI da PR #6 delimitam a entrega; E00.4 e E01 não foram iniciadas.
 
 Use Node.js **26.8.1**, pnpm **12.3.4**, uv **0.12.10** e Python **3.13.12**.
 pnpm é a entrada para o trabalho no projeto; uv mantém Python e dependências na
