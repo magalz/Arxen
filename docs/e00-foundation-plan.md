@@ -36,18 +36,23 @@ upload retomável, OpenHands, OCR final ou provedores reais apenas para encerrar
 Cada subetapa pode gerar mais de uma PR se o comportamento observável justificar a
 separação. Não agrupar mudanças apenas para reduzir número de PRs.
 
-## Objetivo atual: E00.3 — identidade sintética e casos
+## Objetivo atual: E00.4 — conversa persistente
 
 A E00.1 foi integrada pela PR #4 em `ff542c0`; a E00.2 foi aceita e integrada
 pela PR #5 em `6192465`, com review independente e CI aprovados. Seus contratos
 e evidências permanecem em [e00-2-contracts.md](e00-2-contracts.md) e
 [validation-e00-2.md](validation-e00-2.md).
 
-A branch atual é `feat/e00-3-synthetic-cases`. O recorte e os contratos entregues
-estão em [e00-3-synthetic-cases.md](e00-3-synthetic-cases.md). Identidade, criação,
-consulta e reabertura persistente foram demonstradas com PostgreSQL real, incluindo
-duas identidades e a recusa de acesso cruzado. A revisão `20260916_0003` preserva
-os contratos anteriores. E00.4 e E01 não foram iniciadas.
+A E00.3 foi integrada pela PR #6 em `2bad5a0`, com identidade sintética, casos e
+responsabilidade persistida. A configuração Sonar foi integrada pela PR #7 em
+`81a26c8`. Os contratos da etapa anterior estão em
+[e00-3-synthetic-cases.md](e00-3-synthetic-cases.md).
+
+A branch atual é `feat/e00-4-persistent-conversation`. O recorte está em
+[e00-4-persistent-conversation.md](e00-4-persistent-conversation.md): envio autorizado,
+histórico paginado, releitura após recriação da aplicação e idempotência de envios,
+inclusive concorrentes. A revisão `20260916_0004` conserva os contratos anteriores.
+E00.5 e E01 não foram iniciadas; não há worker ou resposta automática nesta entrega.
 
 A conclusão exige `pnpm check`, integração real, guard íntegro, fresh-context
 review do diff final e CI Gate verde. O merge de cada nova PR permanece uma

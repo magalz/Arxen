@@ -42,7 +42,7 @@ addopts = [
     "--strict-config",
     "--strict-markers",
     "--import-mode=importlib",
-    "--cov=arxen_api",
+    "--cov",
     "--cov-branch",
     "--cov-report=term-missing",
     "--cov-report=xml:coverage/api/coverage.xml",
@@ -53,7 +53,9 @@ addopts = [
 [tool.coverage.run]
 branch = true
 relative_files = true
-source = ["arxen_api"]
+source_pkgs = ["arxen_api"]
+source_dirs = ["scripts"]
+patch = ["subprocess"]
 # SQL access is measured against real PostgreSQL by the integration coverage gate.
 omit = ["*/arxen_api/persistence.py"]
 data_file = ".coverage.api"

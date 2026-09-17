@@ -91,7 +91,7 @@ verificação final usa os scripts completos, com a cobertura habilitada.
 
 Desde a E00.2, há dois gates complementares de cobertura Python, ambos em 85%:
 as unidades medem os módulos da API, exceto `arxen_api.persistence`; a integração
-mede exatamente esse módulo SQL contra PostgreSQL real, com branches habilitados.
+mede esse módulo SQL contra PostgreSQL real, com branches habilitados.
 A exclusão unitária é específica a esse arquivo, não a uma pasta genérica. Novos
 módulos continuam sujeitos ao gate unitário até uma decisão explícita de camada.
 As configurações ficam em `pyproject.toml` e `tests/integration/coverage.ini`.
@@ -99,6 +99,14 @@ As configurações ficam em `pyproject.toml` e `tests/integration/coverage.ini`.
 O CI Gate exige ambos. Não substituir a integração por mocks para aumentar a
 cobertura aparente. Os relatórios são separados em `coverage/api/` e
 `coverage/integration/`, com arquivos de dados de cobertura distintos.
+
+Na E00.4, a coleta passa também a incluir `scripts` nas unidades e `migrations`
+na integração, inclusive os subprocessos reais do CLI/Alembic. Além do gate de 85%
+de cada relatório ampliado, os scripts pnpm executam `coverage report` com 85%
+especificamente para a API original e para `persistence.py`. Assim as fontes
+adicionais não podem mascarar uma queda nos dois escopos anteriores. O pytest usa
+`--cov` sem substituir as fontes definidas nos arquivos de configuração.
+Não são somados percentuais nem criadas coberturas por inferência de testes verdes.
 
 ## Banco e E2E locais
 

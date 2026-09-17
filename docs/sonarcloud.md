@@ -15,11 +15,11 @@ Referência: [cobertura Python e análise pelo CI](https://docs.sonarsource.com/
 
 ## Relatórios e escopo
 
-| Relatório                           | Origem                           | Importação                          |
-| ----------------------------------- | -------------------------------- | ----------------------------------- |
-| `coverage/api/coverage.xml`         | Unidades Python do runner Linux  | `sonar.python.coverage.reportPaths` |
-| `coverage/integration/coverage.xml` | Persistência com PostgreSQL real | `sonar.python.coverage.reportPaths` |
-| `coverage/web/lcov.info`            | Vitest no runner Linux           | `sonar.javascript.lcov.reportPaths` |
+| Relatório                           | Origem                              | Importação                          |
+| ----------------------------------- | ----------------------------------- | ----------------------------------- |
+| `coverage/api/coverage.xml`         | Unidades da API e scripts no Linux  | `sonar.python.coverage.reportPaths` |
+| `coverage/integration/coverage.xml` | Persistência e migrações PostgreSQL | `sonar.python.coverage.reportPaths` |
+| `coverage/web/lcov.info`            | Vitest no runner Linux              | `sonar.javascript.lcov.reportPaths` |
 
 O job depende de qualidade/unidades e integração. Os dois downloads usam nomes
 exatos de artefatos da mesma execução do workflow; não buscam relatórios de outra
@@ -33,15 +33,33 @@ como testes, sem duplicar sua classificação como código de aplicação. Saíd
 execução e dependências permanecem fora dessas raízes e ignoradas pelo Git.
 
 Não há nova exclusão de cobertura para melhorar percentuais. O escopo da análise
-estática é maior que os denominadores dos gates atuais: por exemplo, migrações,
-scripts operacionais e o bootstrap web podem aparecer sem cobertura importada.
-Isso deve ser tratado como lacuna de instrumentação/cobertura, sem inventar medidas
-a partir de testes aprovados. O percentual global do SonarCloud não precisa ser
+estática é maior que o denominador das unidades da API. Scripts e migrações agora
+recebem medição das execuções reais, inclusive em subprocessos. O bootstrap web
+ainda pode aparecer sem cobertura importada. Isso deve ser tratado como lacuna de
+instrumentação/cobertura, sem inventar medidas a partir de testes aprovados.
+O percentual global do SonarCloud não precisa ser
 igual ao percentual agregado de `pnpm test:api` ou de `pnpm test:web`.
 
 Os dois gates Python de 85% e os limiares web de 85% permanecem inalterados.
-`persistence.py` continua medido na integração real. Nenhum teste foi alterado;
-o guard de dezesseis arquivos continua ativo. Não somar percentuais de relatórios.
+`persistence.py` continua medido na integração real. Há verificações adicionais dos
+escopos originais da API e da persistência para que as novas fontes não mascarem
+seus resultados. O guard segue cumulativo; a mudança de instrumentação não altera
+testes. Não somar percentuais de relatórios.
+
+## Instrumentação após o merge da configuração
+
+O CI de `main` em `81a26c8` importou os dois XML e o LCOV, mas o Quality Gate
+reprovou: cobertura de código novo 58,4%, exigência de 80%. O relatório por arquivo
+mostrou o script do guard e as migrações em 0%, apesar de suas execuções nos testes.
+A E00.4 inclui essas fontes na coleta e habilita `patch = subprocess` no coverage.py
+7.16.1 já instalado. Não há alteração de versões, testes ou exclusões de código.
+
+O pytest-cov 7 delega a coleta de subprocessos a essa opção do coverage.py.
+O suporte gera arquivos paralelos e o plugin combina os dados da execução antes
+de produzir os relatórios. As verificações explícitas de 85% dos escopos originais
+permanecem nos comandos pnpm, além do limiar dos relatórios ampliados.
+Referências: [pytest-cov](https://pytest-cov.readthedocs.io/en/latest/subprocess-support.html)
+e [coverage.py](https://coverage.readthedocs.io/en/latest/config.html#run-patch).
 
 ## Credencial e ativação
 
@@ -108,3 +126,13 @@ Foram conferidas cinco classes no XML de unidades, uma no XML de persistência e
 uma fonte no LCOV. Os avisos de depreciação do TestClient continuam visíveis.
 O percurso web não mudou; Chromium permanece obrigatório no CI. Estes resultados
 não substituem a conferência da primeira análise autenticada no SonarCloud.
+
+## Caminhos com fontes de pacotes e diretórios
+
+A configuração distingue `source_pkgs` (API ou módulo de persistência) e
+`source_dirs` (scripts ou migrações). Isso conserva o conjunto medido, mas faz o
+XML manter os caminhos completos relativos ao repositório. Misturar nomes de
+pacote e diretórios em `source` gerava raízes diferentes: o scanner podia ignorar
+arquivos apesar de o coverage.py mostrar sua execução. A PR #8 demonstrou essa
+falha no primeiro CI e conferiu a equivalência de todos os contadores após o ajuste.
+Os relatórios são produzidos pelo coverage.py, sem reescrita de métricas no CI.

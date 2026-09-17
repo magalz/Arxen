@@ -8,6 +8,7 @@ e smoke de navegador. A E00.1 adiciona configuração tipada e migrações Alemb
 A E00.2 estabelece contratos internos persistentes de caso, mensagem, fonte,
 tarefa e evento, com integridade demonstrada em PostgreSQL real. A E00.3 acrescenta
 identidade sintética e criação/consulta de casos com responsabilidade persistida.
+A E00.4 acrescenta envio idempotente e histórico paginado de mensagens pela API.
 O percurso web funcional permanece nas próximas subetapas.
 Consulte [contratos e limites](docs/e00-2-contracts.md) e
 [evidências da E00.2](docs/validation-e00-2.md).
@@ -21,7 +22,14 @@ A E00.3 oferece identidade sintética opt-in, `GET /api/v1/me`, `POST /api/v1/ca
 e `GET /api/v1/cases/{case_id}`, restritos a desenvolvimento/teste. Criação atômica,
 reabertura e recusa de acesso cruzado foram demonstradas com PostgreSQL real;
 consulte [estado e execução da E00.3](docs/e00-3-synthetic-cases.md) e
-[evidências de validação](docs/validation-e00-3.md). E00.4 e E01 não foram iniciadas.
+[evidências de validação](docs/validation-e00-3.md).
+
+A [conversa persistente da E00.4](docs/e00-4-persistent-conversation.md) oferece
+POST e GET em `/api/v1/cases/{case_id}/messages`, preserva a autoria do servidor
+e recupera o histórico após recriar a aplicação. Os envios exigem
+`client_message_id`; reenvio idêntico recupera a mensagem e conteúdo diferente
+com a mesma chave gera conflito. [Validação](docs/validation-e00-4.md).
+E00.5, interface de conversa e E01 não foram iniciadas.
 
 Use Node.js **26.8.1**, pnpm **12.3.4**, uv **0.12.10** e Python **3.13.12**.
 Na raiz do repositório:

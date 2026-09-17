@@ -12,6 +12,8 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from arxen_api.contracts import Case
+from arxen_api.conversation import MessageRepository
+from arxen_api.conversation_api import create_conversation_router
 from arxen_api.persistence import CoreRepository
 from arxen_api.settings import DatabaseSettings
 from arxen_api.synthetic_identity import SyntheticIdentity
@@ -132,4 +134,12 @@ def create_synthetic_router(
         response.headers["Cache-Control"] = "no-store"
         return case
 
+    @contextmanager
+    def conversation_repository() -> Iterator[MessageRepository]:
+        with case_connection() as connection:
+            yield CoreRepository(connection)
+
+    router.include_router(
+        create_conversation_router(current_user, conversation_repository)
+    )
     return router
