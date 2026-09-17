@@ -3,7 +3,9 @@
 import os
 from collections.abc import Mapping
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from arxen_api.settings import load_database_settings
 from arxen_api.synthetic_api import create_synthetic_router
@@ -21,8 +23,20 @@ def create_app(environ: Mapping[str, str] | None = None) -> FastAPI:
     configured = os.environ if environ is None else environ
     identity = load_synthetic_identity(configured)
     if identity is not None:
-        load_database_settings(configured)
-        application.include_router(create_synthetic_router(identity))
+        database = load_database_settings(configured)
+
+        @application.exception_handler(RequestValidationError)
+        async def invalid_request(
+            request: Request, error: RequestValidationError
+        ) -> JSONResponse:
+            # Validation details may contain submitted credentials or private input.
+            return JSONResponse(
+                status_code=422,
+                content={"detail": "Invalid request"},
+                headers={"Cache-Control": "no-store"},
+            )
+
+        application.include_router(create_synthetic_router(identity, database))
 
     return application
 

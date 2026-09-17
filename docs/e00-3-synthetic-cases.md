@@ -6,10 +6,11 @@ A E00.2 foi aceita e integrada pela PR #5 em `6192465`. O objetivo desta etapa �
 demonstrar uma identidade de desenvolvimento/teste criando, consultando e reabrindo
 o mesmo caso persistido em PostgreSQL, inclusive após recriar a aplicação.
 
-**Estado atual: implementação parcial, aguardando revisão independente.** Estão
-implementados o opt-in de configuração e `GET /api/v1/me`. Criação/consulta de
-casos com identidade e a nova migração ainda não foram implementadas. O objetivo
-completo da E00.3 não está demonstrado por este primeiro slice.
+Estão implementados o opt-in de configuração, a identidade HTTP e o fluxo
+persistente de criação, consulta e reabertura de casos. Os testes exercitam duas
+identidades, novas conexões e aplicações recriadas contra PostgreSQL real. As
+evidências locais estão em [validation-e00-3.md](validation-e00-3.md); review
+independente e CI são registrados na PR #6, vinculados ao SHA revisado.
 
 Referências normativas: specs privadas 14–18 e a subdivisão da E00 no
 [plano da fundação](e00-foundation-plan.md). As specs permanecem fora do Git.
@@ -19,7 +20,7 @@ O recorte inicial da API é `GET /api/v1/me`, `POST /api/v1/cases` e
 não existe comando de desarquivamento nesta entrega. Listagem paginada, edição,
 arquivamento, conversa e interface recebem suas próprias entregas.
 
-## Invariantes e decisões para a etapa completa
+## Invariantes e decisões
 
 - O modo sintético exige ativação explícita e ambiente `development` ou `test`.
   Por padrão, somente as rotas já existentes são registradas. Ativá-lo em outro
@@ -27,15 +28,14 @@ arquivamento, conversa e interface recebem suas próprias entregas.
 - A identidade e o token de teste vêm da configuração do servidor. O cliente
   apresenta o token Bearer; campos ou headers de identidade não escolhem o dono.
   Esse mecanismo é um adaptador sintético, não a autenticação OIDC da E01.
-- A relação entre caso e identidade sintética deverá ser persistida. Um caso de
-  outra identidade ou sem atribuição deverá ser inacessível pela API, mesmo
-  conhecendo seu ID. Casos internos da E00.2 não deverão ser atribuídos
-  automaticamente.
+- A relação entre caso e identidade sintética é persistida. Um caso de outra
+  identidade ou sem atribuição recebe 404 pela API, mesmo conhecendo seu ID.
+  Casos internos da E00.2 permanecem sem atribuição automática.
 - IDs e instantes continuam gerados pelo banco. A resposta de criação só é
   entregue após o commit. Leituras não criam casos nem alteram seu conteúdo.
-- Uma nova revisão Alembic deverá estender o esquema. Migrações da E00.1/E00.2
-  permanecem intactas. Não serão criadas organizações, memberships ou RLS nesta
-  etapa; esses controles continuam obrigatórios antes de uso real na E01.
+- A revisão Alembic `20260916_0003` estende o esquema. Migrações da E00.1/E00.2
+  permanecem intactas. Organizações, memberships e RLS continuam fora deste
+  adaptador; os controles de produção pertencem à E01.
 
 ## Slices TDD
 
@@ -49,53 +49,90 @@ arquivamento, conversa e interface recebem suas próprias entregas.
    por outra instância e rejeição de acesso cruzado.
 5. Verificação consolidada, documentação, PR, CI Gate e fresh-context review.
 
-Cada Red válido será congelado antes da implementação. O guard da E00.2 foi
+Cada Red válido foi congelado antes da implementação. O guard da E00.2 foi
 verificado após o merge; os hashes históricos permanecem em sua documentação.
 Mudanças necessárias em expectativas de versão de migração exigem justificativa
 e revisão separada, preservando os cenários de integridade anteriores.
 
-### Retomada e decisões do recorte
+## Persistência e transações
 
 Na retomada, a branch e a PR #6 foram conferidas em `f36ad08`, com árvore limpa
 e os dez arquivos do guard intactos. A identidade do coordenador foi recuperada;
 não havia worker responsável pela implementação restante.
 
-Os próximos slices são: evolução revisada do teste de head; migração e vínculo
-persistente; criação/consulta HTTP; validação e revisão do diff final. A estrutura
-proposta é uma tabela exclusiva do adaptador sintético, com uma linha por caso,
-FK para `cases` e UUID de responsável configurado no servidor. Ela permite manter
-casos internos da E00.2 sem atribuição e sem acesso pelas novas rotas.
+A tabela `synthetic_case_owners` pertence exclusivamente ao adaptador sintético.
+`case_id` é PK e FK para `cases(id)`; `owner_user_id` é UUID obrigatório e não nulo.
+A PK permite somente um responsável por caso. O usuário sintético vem da
+configuração, sem criar cadastro de usuários ou memberships fictícios. A migração
+não atribui casos antigos nem modifica os cinco contratos da E00.2.
+
+`CoreRepository.create_owned_case` grava caso e vínculo em um único comando SQL
+com CTE, mantendo a transação sob responsabilidade do chamador. A rota abre uma
+conexão por operação e conclui seu commit antes de retornar 201. O teste observa
+os dois registros por outra conexão no instante de envio dos headers HTTP.
+`get_owned_case` filtra ID e responsável em um JOIN; não utiliza a leitura interna
+irrestrita como alternativa. Leituras não criam vínculos ou alteram casos.
+
+O upgrade foi testado a partir de banco vazio e da revisão `20260916_0002` com
+dados dos cinco contratos. O downgrade de `0003` remove somente os vínculos
+sintéticos, preservando os casos e pgvector; foi exercitado exclusivamente em
+bancos descartáveis. Uma reaplicação não restaura vínculos removidos. Migrações
+do banco local são executadas explicitamente por `pnpm db:migrate`.
+
+## Contrato HTTP
 
 O corpo de criação admite somente título, omitível com o provisório `Novo caso`.
-A API retornará ID, título e instante persistidos. Formato do título e tratamento
+A API retorna ID, título e instante persistidos. Formato do título e tratamento
 de valores inválidos foram fixados nos testes: corpo JSON obrigatório, `{}` aceito,
 string estrita com espaços externos removidos, entre 1 e 200 caracteres, sem NUL
 ou Unicode inválido. `null`, outros tipos e campos extras recebem 422. Identidade
-no corpo não será aceita; header ou query não alterarão o responsável validado.
+no corpo não é aceita; header ou query não alteram o responsável validado.
+
+| Rota                          | Resultado                                                             |
+| ----------------------------- | --------------------------------------------------------------------- |
+| `GET /api/v1/me`              | 200 com `id` e `synthetic: true`; não abre conexão com o banco.       |
+| `POST /api/v1/cases`          | 201 após commit, com `id`, `title`, `created_at` e header `Location`. |
+| `GET /api/v1/cases/{case_id}` | 200 com o mesmo registro persistido; reabertura usa esta rota.        |
+
+Credencial ausente ou incorreta recebe 401 com `WWW-Authenticate: Bearer`.
+Recurso inexistente, alheio ou sem atribuição recebe o mesmo 404 `Case not found`.
+Corpo inválido ou UUID de caminho malformado recebe 422 `Invalid request`, sem
+reproduzir valores enviados pelo cliente. Falhas de PostgreSQL retornam 503
+`Case storage unavailable`, sem incluir SQL, credenciais ou diagnóstico do driver.
+Essas respostas e as respostas de sucesso usam `Cache-Control: no-store`.
 
 São requisitos desta etapa a atomicidade, releitura entre aplicações, escopo de
 responsável e upgrade que preserve dados antigos. Revisões para edição, fase,
 objetivo, listagem, idempotência de criações e autenticação de produção pertencem
 aos próximos recortes. A escolha do provedor OIDC permanece aberta para E01.
 
-### Correção proposta do teste de head
+## Regressões de migração e guard
 
-`test_core_contracts.py` executa `pnpm db:migrate`, que avança até o head, mas
-compara a versão a `20260916_0002`. Uma nova revisão torna essa expectativa fixa
-incompatível com o comando. A proposta submetida à revisão independente é obter
-o head dos scripts Alembic versionados, sem usar o banco como resultado esperado,
-preservando cada assertion de contratos, transações, extensão e downgrade.
-Um teste específico novo deve provar a revisão seguinte e seu upgrade desde a
-E00.2. A falha incidental da versão não será usada como Red de responsabilidade.
-O arquivo congelado só será alterado após parecer separado sobre a correção.
+Após revisão independente separada, `test_core_contracts.py` continua executando
+`pnpm db:migrate` e compara o resultado ao head único dos scripts versionados.
+As assertions anteriores foram preservadas, com verificação adicional de que o
+novo esquema existe e não atribui os casos criados internamente. A regressão
+específica de `0003` usa upgrade explícito dessa revisão, incluindo dados antigos,
+downgrade e re-upgrade em banco descartável. Os dois testes observaram novo Red
+de ausência do esquema antes do snapshot autorizado e do DDL correspondente.
+
+O guard final é cumulativo e contém quinze arquivos. A justificativa, os pareceres,
+as duas exceções revisadas e os hashes estão no registro de validação. Nenhum teste
+foi enfraquecido ou retirado da suíte para acomodar a implementação.
 
 ## Limites
 
-A E00.4 ainda não começou. Não há sessão de produção, login OIDC, organizações,
+A E00.4 e a E01 não foram iniciadas. Não há sessão de produção, login OIDC, organizações,
 convites, worker, SSE, upload ou chamadas de modelo. Não se trata de ambiente
-para documentos reais. Novas dependências não estão previstas.
+para documentos reais. Nenhuma dependência nova ou ORM foi adotado.
 
-## Executar o slice de identidade
+Não há idempotência de criação: repetir um POST após perder a resposta pode criar
+outro caso. As falhas confirmadas por constraints demonstram rollback integral;
+perder a conexão durante o commit pode deixar o resultado indeterminado para o
+cliente. A API não repete automaticamente a gravação nem promete rollback nesse
+caso. O tratamento operacional e a idempotência pertencem a um recorte posterior.
+
+## Executar o fluxo sintético
 
 O servidor lê estas variáveis ao criar a aplicação:
 
@@ -107,12 +144,20 @@ O servidor lê estas variáveis ao criar a aplicação:
 | `ARXEN_SYNTHETIC_TOKEN`        | Token local não vazio, sem espaços; sem valor padrão            |
 | `DATABASE_URL`                 | URL PostgreSQL válida; `/me` e `/healthz` não abrem conexão     |
 
-Inicie com `pnpm dev:api`, ligado a `127.0.0.1` pelo script existente. Consulte
+Com o PostgreSQL sintético configurado, aplique `pnpm db:migrate`. Inicie com
+`pnpm dev:api`, ligado a `127.0.0.1` pelo script existente. Consulte
 `GET /api/v1/me` com `Authorization: Bearer <token-local>`. A resposta contém
 `id` e `synthetic: true`, com `Cache-Control: no-store`. Token ausente ou incorreto
 retorna 401. O ID informado pelo cliente em `X-User-Id` não altera a identidade.
 
-Com o modo desativado, a rota não é registrada nem aparece no OpenAPI. Um ambiente
+Envie `POST /api/v1/cases` com o mesmo Bearer e um objeto JSON, por exemplo
+`{"title":"Caso sintético"}` ou `{}`. Guarde o ID retornado e consulte
+`GET /api/v1/cases/{id}`. Recriar o servidor com o mesmo UUID e banco preserva
+o acesso; o token pode ser trocado na configuração sem alterar os vínculos.
+Para demonstrar a recusa de acesso cruzado, configure outra instância com outro
+UUID e token. Nenhum header de identidade substitui essa configuração.
+
+Com o modo desativado, as rotas não são registradas nem aparecem no OpenAPI. Um ambiente
 indevido ou configuração inválida causa falha explícita ao criar a aplicação.
 O token não aparece no `repr` da configuração nem nas respostas testadas. Não
 versionar variáveis locais nem expor este adaptador como autenticação de produção.
@@ -120,15 +165,10 @@ versionar variáveis locais nem expor este adaptador como autenticação de prod
 O uso de `HTTPBearer` segue a [referência do FastAPI](https://fastapi.tiangolo.com/reference/security/).
 As credenciais sintéticas são conferidas pelo adaptador do projeto.
 
-## Próximo slice e bloqueio atual
+## Entrega e revisão
 
-`test_core_contracts.py` verifica `pnpm db:migrate` e espera a revisão da E00.2.
-Antes da nova revisão, é necessária a revisão separada da evolução dessa
-expectativa, mantendo os testes de criação, commit, reabertura e rollback. O
-arquivo continua congelado e inalterado.
-
-A coordenação de workers recusou chamadas por `WORKER_IDENTITY_LOST`. Uma tentativa
-de consulta em contexto novo pelo Codex CLI instalado, com sandbox read-only,
-encerrou por limite de uso sem produzir parecer. Nenhuma dessas tentativas conta
-como revisão. A PR deste slice permanece em rascunho até concluir as etapas e os
-reviews pertinentes. Evidências em [validation-e00-3.md](validation-e00-3.md).
+A PR #6 reúne a identidade e o fluxo persistente de casos. Sua liberação para
+revisão do responsável exige `pnpm check`, integração real, guard íntegro,
+fresh-context review do diff final e CI Gate do mesmo SHA. As consultas de escopo
+e correção de testes não substituem esse review. O merge depende de autorização
+explícita do responsável pelo projeto.

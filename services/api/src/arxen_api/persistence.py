@@ -35,10 +35,32 @@ class CoreRepository:
             return cursor.fetchone()
 
     def create_owned_case(self, owner_user_id: UUID, title: str = "Novo caso") -> Case:
-        raise NotImplementedError("Synthetic case creation is not implemented")
+        """Insert the case and binding atomically; the caller still owns commit."""
+        with self.connection.cursor(row_factory=class_row(Case)) as cursor:
+            cursor.execute(
+                "WITH new_case AS ("
+                "INSERT INTO cases (title) VALUES (%s) RETURNING id, title, created_at"
+                "), binding AS ("
+                "INSERT INTO synthetic_case_owners (case_id, owner_user_id) "
+                "SELECT id, %s FROM new_case RETURNING case_id"
+                ") SELECT c.id, c.title, c.created_at FROM new_case c "
+                "JOIN binding b ON b.case_id = c.id",
+                (title, owner_user_id),
+            )
+            case = cursor.fetchone()
+            assert case is not None
+            return case
 
     def get_owned_case(self, owner_user_id: UUID, case_id: UUID) -> Case | None:
-        raise NotImplementedError("Synthetic case lookup is not implemented")
+        """Scope every synthetic read to the identity validated by the server."""
+        with self.connection.cursor(row_factory=class_row(Case)) as cursor:
+            cursor.execute(
+                "SELECT c.id, c.title, c.created_at FROM cases c "
+                "JOIN synthetic_case_owners o ON o.case_id = c.id "
+                "WHERE c.id = %s AND o.owner_user_id = %s",
+                (case_id, owner_user_id),
+            )
+            return cursor.fetchone()
 
     def add_message(self, case_id: UUID, role: MessageRole, content: str) -> Message:
         with self.connection.cursor(row_factory=class_row(Message)) as cursor:

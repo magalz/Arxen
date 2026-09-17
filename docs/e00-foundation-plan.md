@@ -43,10 +43,11 @@ pela PR #5 em `6192465`, com review independente e CI aprovados. Seus contratos
 e evidências permanecem em [e00-2-contracts.md](e00-2-contracts.md) e
 [validation-e00-2.md](validation-e00-2.md).
 
-A branch atual é `feat/e00-3-synthetic-cases`. O recorte, o estado parcial e os
-próximos slices estão em [e00-3-synthetic-cases.md](e00-3-synthetic-cases.md).
-Somente a configuração e o endpoint de identidade sintética foram implementados;
-o fluxo persistente de casos ainda não foi demonstrado. A E00.4 não começou.
+A branch atual é `feat/e00-3-synthetic-cases`. O recorte e os contratos entregues
+estão em [e00-3-synthetic-cases.md](e00-3-synthetic-cases.md). Identidade, criação,
+consulta e reabertura persistente foram demonstradas com PostgreSQL real, incluindo
+duas identidades e a recusa de acesso cruzado. A revisão `20260916_0003` preserva
+os contratos anteriores. E00.4 e E01 não foram iniciadas.
 
 A conclusão exige `pnpm check`, integração real, guard íntegro, fresh-context
 review do diff final e CI Gate verde. O merge de cada nova PR permanece uma
